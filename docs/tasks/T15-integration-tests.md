@@ -20,7 +20,12 @@ stub serving the fixture repos)
    is set and nothing is auto-applied.
 5. Uninstall: the container, the NPM host and the port allocations are all gone.
 6. Template export into a temp dir: the file matches the golden file.
-7. Two apps that both prefer the same port get different host ports.
+7. Import: start a container directly with `docker run`, using dockerMan-style labels and
+   a matching `my-<name>.xml` in the export dir, plus a hand-made NPM proxy host. Then
+   scan, plan and apply. Check that the container was recreated with UAM labels, has
+   the same image digest, the same host port and the same env, and that the NPM host
+   was claimed (and not duplicated).
+8. Two apps that both prefer the same port get different host ports.
 
 Mark the tests `@pytest.mark.integration`. They run in CI through `integration.yml`
 (GitHub-hosted runners have Docker).

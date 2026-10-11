@@ -31,7 +31,8 @@ empty packages for every directory listed in the CLAUDE.md layout, `.github/work
    `FakeDocker` (container dict, simulated health, can be told to fail
    create/start/health), `FakePortAllocator`, `FakeProxyManager`, `FakeVault`,
    `FakeCodec` (delegates to a minimal parser that is good enough for fixtures), and
-   in-memory repositories.
+   in-memory repositories, and `FakeImporter` (returns canned candidates and plans). `FakeDocker`
+   must support seeding "foreign" containers with full inspect data, which import tests need.
 7. `tests/conftest.py`: fixtures `frozen_now`, `tmp_db`, and `fakes` (a bundle of all fakes).
 8. `tests/fixtures/templates/`: at least 4 real-world-shaped templates: a simple web app;
    one with several ports including UDP; one with masked variables and `ExtraParams`;

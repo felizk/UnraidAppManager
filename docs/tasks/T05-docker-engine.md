@@ -20,6 +20,10 @@ the `docker` Python SDK, with every call wrapped in `asyncio.to_thread`.
   `nano_cpus`, `cpuset_cpus`, `log_config`, and command. Connect `extra_networks` after
   creation. If the name already exists, raise `ConflictError`.
 - `inspect` returns `None` for a missing container. Map `State.Health.Status` to `health`.
+  Also fill the import fields (T16): `image_id`, `image_labels` (from inspecting the
+  image's `Config.Labels`), `env` (`Config.Env` with the image's own default env removed, so
+  only container-specific values remain), `mounts` (bind mounts only), `devices`,
+  `network` (`HostConfig.NetworkMode`) and `restart_policy`.
 - `wait_healthy`: poll every 2 s. If a healthcheck is defined, wait for `healthy`, and
   fail on `unhealthy` or a timeout. If not, require `running` for `stable_s` seconds
   without a restart (watch `RestartCount`).

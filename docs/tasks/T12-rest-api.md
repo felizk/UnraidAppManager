@@ -32,6 +32,9 @@ GET  /api/ports                      # allocations + in-use summary
 GET  /api/npm/certificates           GET /api/npm/access-lists
 POST /api/templates/export/plan      POST /api/templates/export/apply
 GET  /api/events
+GET  /api/imports/candidates                     # Importer.scan()
+POST /api/imports/plan                           # {container_name, source_id|new_source, template_path, options} → ImportPlan
+POST /api/imports/apply                          # ImportPlan (as returned by /plan) → 202 {app_id}
 ```
 - Credential responses never include secrets.
 - Errors are mapped centrally: NotFound → 404, ConflictError → 409, ValidationError →

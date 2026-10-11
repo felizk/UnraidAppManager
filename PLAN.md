@@ -16,6 +16,7 @@ container, registers a subdomain in Nginx Proxy Manager (NPM), and keeps it all 
 | F4 | NPM subdomains | On install, create or update a proxy host `<subdomain>.<base_domain>` that points at the app's WebUI port. On uninstall, delete it. Options: SSL cert id, force SSL, websockets, access list. |
 | F5 | Private repos and packages | Credentials (GitHub PATs, registry logins) are stored encrypted. Each source and each image registry can use a credential. Docker pulls pass `auth_config` per pull and never write `~/.docker/config.json`. |
 | F6 | Tiered update checks | "Hot" apps (template or image changed or installed within `hot_window`, default 7 days) are checked every `hot_interval` (default 5 min). Every other app is checked once per day. Checks are cheap: conditional GitHub requests (ETag, so a 304 costs no rate limit) and registry `HEAD` requests for the manifest digest. A per-app `auto_update` setting chooses between applying an update and only flagging it. |
+| F8 | Import existing apps | Scan the containers already on the server (typically ones created by Unraid's Docker tab, with a `my-<name>.xml` on flash). Match each one to a GitHub source and template, keep its current ports, settings, running image and NPM subdomain, then recreate it under UAM management. You review a plan first; settings the repo template can't express are listed before anything changes. |
 | F7 | Template export to flash | Runs only when you trigger it, per app or for all apps. Writes `my-<Name>.xml` with the resolved values into `/boot/config/plugins/dockerMan/templates-user`. You get a diff preview first, and the existing file is backed up before it is overwritten. |
 
 Out of scope for v1 (stretch goals): GitHub webhooks for instant updates, Docker Compose
@@ -107,6 +108,21 @@ under the configured appdata root).
   If the GitHub rate-limit remaining drops below 10%, the hot interval is doubled until
   the limit resets.
 
+**Import (F8, T16):**
+1. **Scan:** list every container without `uam.managed`, and read its flash template if
+   there is one.
+2. **Match a source:** use the image's `org.opencontainers.image.source` label, the
+   `ghcr.io/<owner>/<repo>` image name, or GitHub URLs in the template. Pick the repo
+   template whose image matches.
+3. **Plan:** derive overrides from the live container (`inspect`), with the flash template
+   as a fallback. Pin the current host ports (even outside the range). Pin the running tag
+   and digest, so the import never upgrades the app. Match the NPM host by domain or port.
+   List the *dropped* settings, which the repo template has no field for.
+4. **Apply:** save the app with `labels_pending=True`, pin the ports and claim the NPM
+   host, which adds the UAM marker. Then recreate the container blue/green from the same
+   digest so it gets UAM labels. If the recreate fails, the old container is restored and
+   the app stays imported but flagged.
+
 **Template export:** render `UnraidTemplate` with resolved values (actual host ports and
 override values). The user chooses whether to include masked secrets (default: include,
 which matches what Unraid itself stores). Diff the result against the existing
@@ -135,6 +151,7 @@ need `CLAUDE.md`, `docs/contracts.md` and its own brief.
 | T12 | REST API and auth | 3 | T00 (fakes) | `uam/web/api/`, `uam/web/auth.py` |
 | T13 | Web UI (HTMX) | 3 | T12 | `uam/web/ui/`, `uam/web/templates/`, `uam/web/static/` |
 | T14 | Wiring, packaging, CI, UAM's own template | 4 | all | `uam/app.py`, `Dockerfile`, `.github/`, `unraid/` |
+| T16 | Import existing Unraid apps | 2 | T00 (fakes) | `uam/services/importer.py`, `uam/services/import_matching.py` |
 | T15 | Integration/E2E tests (real Docker, NPM in compose) | 4 | T14 | `tests/integration/` |
 
 ```
@@ -147,14 +164,15 @@ T00 ──┬─ T01 ─┬─ T08 ─┐
       ├─ T07          │
       ├─ T09 (fakes) ─┤
       ├─ T10 (fakes) ─┤
+      ├─ T16 (fakes) ─┤
       └─ T12 ── T13 ──┘
 ```
 
-Because services and the web layer build against fakes, **up to 12 tasks can run in
+Because services and the web layer build against fakes, **up to 13 tasks can run in
 parallel right after T00**. In practice, batches of 4–6 are easier to review:
 
 * Batch A: T01, T02, T03, T04, T05, T06, T07 (pure leaf modules)
-* Batch B: T08, T09, T10, T11, T12
+* Batch B: T08, T09, T10, T11, T12, T16
 * Batch C: T13, then T14, then T15
 
 ## 6. How to run this plan with subagents
@@ -191,5 +209,8 @@ parallel right after T00**. In practice, batches of 4–6 are easier to review:
    `<container_name>:<container_port>` (per-app toggle).
 4. **Port range:** a single global range `30000-30999` by default. Per-protocol or
    per-app ranges could be added later.
-5. **Python vs Go:** Python is chosen for subagent productivity. Go would give a smaller
+5. **Secrets in overrides:** masked template values (from installs and imports) currently
+   sit in the `apps.overrides` JSON in plain text. Proposal: T00 stores the overrides of
+   masked configs encrypted with the vault key. Decide before T00 starts.
+6. **Python vs Go:** Python is chosen for subagent productivity. Go would give a smaller
    single binary. The contracts translate one-to-one if this changes.

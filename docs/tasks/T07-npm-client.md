@@ -31,6 +31,11 @@ Implement `ProxyManager` (`uam/clients/npm.py`, class `NpmClient`) against the N
     `ConflictError`. UAM-created hosts carry a marker comment in `advanced_config`:
     `# managed-by: unraid-app-manager app=<name>`. Set `advanced_config` to that marker
     on create.
+- `list_proxy_hosts()` returns every host as a `ProxyHost`.
+  `claim_proxy_host(id, app_name)` puts the marker line in front of the existing
+  `advanced_config` (keeping the user's config) and PUTs only that field. After that,
+  `ensure_proxy_host` treats the host as UAM-managed. Claiming a host that is already
+  marked for the same app does nothing.
 - `delete_proxy_host`: `DELETE /api/nginx/proxy-hosts/{id}`. A 404 is treated as success.
 - `list_certificates` → `GET /api/nginx/certificates` as `(id, nice_name)`.
   `list_access_lists` → `GET /api/nginx/access-lists`.
@@ -39,6 +44,6 @@ Implement `ProxyManager` (`uam/clients/npm.py`, class `NpmClient`) against the N
 ## Acceptance
 - respx tests: token caching and refresh on 401, create, idempotent ensure (no PUT when
   nothing changed), update when the port changed, adopting an existing UAM-marked host,
-  refusing a foreign host, and a delete returning 404.
+  refusing a foreign host, claiming a foreign host (advanced_config is kept), and a delete returning 404.
 - Write a short `docs/npm-api-notes.md` that lists the payload fields you verified against
   the NPM source (`backend/schema/components/proxy-host-object.json`).

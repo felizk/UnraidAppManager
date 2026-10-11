@@ -33,11 +33,16 @@ published ports), and an optional `HostListenerProbe`.
   - If no port is free, raise `PortRangeExhausted`.
   - Remove allocations this app has that are not in `requests`, because the template
     dropped those ports.
+- `pin(app_id, bindings, ignore_container_id)` (used by import, T16): store the exact host
+  ports, even outside the range. It ignores ports published by `ignore_container_id`
+  (the container being imported), and raises `ConflictError` if another app's
+  allocation or another container uses one of them. A later `allocate()` returns pinned
+  rows unchanged, even when they are outside the range.
 - `release(app_id)` deletes the app's rows.
 - The `uam/ports/probe.py` helper is unit-tested with sample `/proc/net/tcp` content.
 
 ## Acceptance
 - Tests: stability across calls, preferred port honoured or skipped, collision with a
   foreign container port, collision with a host listener, TCP+UDP pairing, range
-  exhaustion, stale cleanup, and concurrent allocations (asyncio.gather of 20 apps
+  exhaustion, stale cleanup, pin outside the range and pin conflict, and concurrent allocations (asyncio.gather of 20 apps
   gives no duplicates).

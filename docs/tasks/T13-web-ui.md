@@ -29,9 +29,22 @@ no JS build step.
    button).
 5. **Templates export** `/export`: select apps, "Preview" shows the diffs (`<pre>` with
    +/- colouring), then "Write to flash" with an include-secrets checkbox.
-6. **Credentials** `/credentials`: add/delete/test. Secrets are write-only.
-7. **Settings** `/settings`: every `Settings` field, with a "Test NPM connection" button.
-8. **Login/Setup.**
+6. **Import** `/import` (feature F8, service T16):
+   - A table of candidates: container, image, Unraid-managed badge, best source match
+     with its confidence, matched subdomain, and blockers.
+   - Each row has an "Import…" wizard:
+     1. Choose the source: a dropdown of matches, or "new source" pre-filled with
+        owner/repo. Choose the template.
+     2. Options: keep ports, claim proxy host and subdomain, recreate now,
+        auto-update, archive flash template.
+     3. Review the plan: overrides table (masked values shown as `***`), pinned ports,
+        the **dropped settings, highlighted in red**, the template diff and the
+        warnings. Then confirm.
+   - A multi-select "Import all high-confidence matches with defaults" action. It still
+     shows a combined review step before applying.
+7. **Credentials** `/credentials`: add/delete/test. Secrets are write-only.
+8. **Settings** `/settings`: every `Settings` field, with a "Test NPM connection" button.
+9. **Login/Setup.**
 
 ## Acceptance
 - Route tests check that each page renders with fake data, forms post and redirect, and

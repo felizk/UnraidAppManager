@@ -137,6 +137,7 @@ class App:
     last_checked_at: datetime | None
     next_check_at: datetime | None
     last_error: str | None
+    labels_pending: bool = False        # imported container not yet recreated with UAM labels (T16)
 
 # ---------- Container spec (input to docker adapter) ----------
 @dataclass(frozen=True, slots=True)
@@ -191,6 +192,14 @@ class ContainerInfo:
     health: str | None                  # healthy/unhealthy/starting/None
     labels: dict[str, str]
     published_ports: tuple[PortBinding, ...]
+    # Fields below are filled by inspect(); list_containers() may leave them at their defaults.
+    image_id: str = ""
+    image_labels: dict[str, str] = field(default_factory=dict)  # e.g. org.opencontainers.image.source
+    env: dict[str, str] = field(default_factory=dict)
+    mounts: tuple[Mount, ...] = ()
+    devices: tuple[str, ...] = ()
+    network: str = "bridge"
+    restart_policy: str = ""
 
 @dataclass(frozen=True, slots=True)
 class ProxyHost:
@@ -215,6 +224,66 @@ class UpdateCheckResult:
     new_image_digest: str | None
     needs_attention: str | None
     checked_at: datetime
+
+# ---------- Import of existing containers (T16) ----------
+@dataclass(frozen=True, slots=True)
+class NewSource:
+    owner: str
+    repo: str
+    ref: str = "main"
+    credential_id: int | None = None
+
+@dataclass(frozen=True, slots=True)
+class SourceMatch:
+    source_id: int | None               # None = suggest creating a new source
+    owner: str
+    repo: str
+    template_path: str | None
+    confidence: Literal["high", "medium", "low"]
+    reason: str
+
+@dataclass(frozen=True, slots=True)
+class ImportCandidate:
+    container_id: str
+    container_name: str
+    image: str
+    state: str
+    unraid_managed: str | None          # value of net.unraid.docker.managed, if any
+    flash_template_path: str | None
+    flash_template: UnraidTemplate | None
+    source_matches: tuple[SourceMatch, ...]
+    published_ports: tuple[PortBinding, ...]
+    proxy_host: ProxyHost | None
+    blockers: tuple[str, ...]           # non-empty = cannot import
+    warnings: tuple[str, ...]
+
+@dataclass(frozen=True, slots=True)
+class ImportOptions:
+    keep_host_ports: bool = True        # pin current host ports, even outside the range
+    claim_proxy_host: bool = True       # take ownership of the matched NPM host
+    subdomain: str | None = None        # None = derive from the matched proxy host
+    recreate_now: bool = True           # recreate at once so the container gets UAM labels
+    auto_update_image: bool = True
+    auto_update_template: bool = False
+    archive_flash_template: bool = False
+
+@dataclass(frozen=True, slots=True)
+class ImportPlan:
+    candidate: ImportCandidate
+    source_id: int | None
+    new_source: NewSource | None
+    template_path: str
+    template_commit: str
+    overrides: dict[str, str]
+    image_tag_override: str | None
+    installed_image_digest: str
+    pinned_ports: tuple[tuple[int, Protocol_, int], ...]   # (container_port, protocol, host_port)
+    proxy: ProxySettings
+    adopt_proxy_host_id: int | None
+    options: ImportOptions
+    template_diff: str                  # flash template vs repo template (structure only)
+    dropped: tuple[str, ...]            # container settings the repo template cannot express
+    warnings: tuple[str, ...]
 ```
 
 ## contracts.py
@@ -251,6 +320,11 @@ class DockerEngine(Protocol):
 class PortAllocator(Protocol):
     async def allocate(self, app_id: int, requests: Sequence[tuple[int, Protocol_, int | None]]) -> list[PortAllocation]:
         """requests = (container_port, protocol, preferred_host_port|None). Stable: existing allocations are returned unchanged."""
+    async def pin(self, app_id: int, bindings: Sequence[tuple[int, Protocol_, int]],
+                  ignore_container_id: str | None = None) -> list[PortAllocation]:
+        """Record exact host ports (may be outside the range). Ports published by ignore_container_id
+        don't count as in use. ConflictError if another app holds one of them. Allocations made
+        this way stay stable in later allocate() calls."""
     async def release(self, app_id: int) -> None: ...
     async def in_use(self) -> set[tuple[int, Protocol_]]: ...
 
@@ -259,6 +333,9 @@ class ProxyManager(Protocol):
                                 settings: ProxySettings, existing_id: int | None) -> int: ...
     async def delete_proxy_host(self, host_id: int) -> None: ...  # idempotent (404 ok)
     async def find_by_domain(self, domain: str) -> ProxyHost | None: ...
+    async def list_proxy_hosts(self) -> list[ProxyHost]: ...
+    async def claim_proxy_host(self, host_id: int, app_name: str) -> None:
+        """Mark an existing (foreign) host as UAM-managed by adding the marker to advanced_config."""
     async def list_certificates(self) -> list[tuple[int, str]]: ...
     async def list_access_lists(self) -> list[tuple[int, str]]: ...
 
@@ -297,6 +374,12 @@ class SourceRepository(Protocol):
 class SettingsStore(Protocol):
     async def get(self) -> "Settings": ...       # see uam/settings.py (T00)
     async def save(self, settings: "Settings") -> None: ...
+
+class Importer(Protocol):  # T16
+    async def scan(self) -> list[ImportCandidate]: ...
+    async def plan(self, container_name: str, source_id: int | None, new_source: NewSource | None,
+                   template_path: str | None, options: ImportOptions) -> ImportPlan: ...
+    async def apply(self, plan: ImportPlan) -> App: ...
 
 class EventLog(Protocol):
     async def record(self, app_id: int | None, kind: str, message: str, level: str = "info") -> None: ...
