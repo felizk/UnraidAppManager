@@ -106,8 +106,11 @@ class TemplateExporter:
         self._backup_dir = Path(backup_dir)
         self._clock = clock
 
-    async def plan(self, app_ids: list[int] | None) -> list[ExportPlan]:
-        """Preview the export. `None` means every installed app (one with an installed template commit)."""
+    async def plan(self, app_ids: list[int] | None, include_secrets: bool | None = None) -> list[ExportPlan]:
+        """Preview the export. `None` means every installed app (one with an installed template commit).
+
+        `include_secrets=None` uses `Settings.template_export_include_secrets`.
+        """
         export_dir = await self._export_dir()
         if app_ids is None:
             apps = [a for a in await self._apps.list() if a.installed_template_commit]
@@ -116,7 +119,11 @@ class TemplateExporter:
             for a in apps:
                 if not a.installed_template_commit:
                     raise ValidationError(f"{a.name} has no installed template commit to export")
-        include = (await self._settings.get()).template_export_include_secrets
+        include = (
+            include_secrets
+            if include_secrets is not None
+            else (await self._settings.get()).template_export_include_secrets
+        )
         plans = []
         for app in apps:
             xml = await self._build(app, include)

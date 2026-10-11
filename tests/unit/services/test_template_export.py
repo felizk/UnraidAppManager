@@ -140,3 +140,12 @@ async def test_all_skips_uninstalled(fakes: FakeBundle, tmp_path: Path) -> None:
     assert len(await svc.plan(None)) == 1
     with pytest.raises(ValidationError):
         await svc.plan([other.id])
+
+
+async def test_plan_include_secrets_overrides_setting(fakes: FakeBundle, tmp_path: Path) -> None:
+    svc, *_ = await setup(fakes, tmp_path)
+    s = await fakes.settings.get()
+    s.template_export_include_secrets = True
+    await fakes.settings.save(s)
+    [plan] = await svc.plan(None, include_secrets=False)
+    assert "s3cret" not in plan.new_xml
