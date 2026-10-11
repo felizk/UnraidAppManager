@@ -190,6 +190,14 @@ class DbPortAllocator:
             except IntegrityError as exc:
                 raise ConflictError("host port conflicts with an existing allocation") from exc
 
+    async def allocations(self) -> list[PortAllocation]:
+        """Every stored allocation, ordered by host port."""
+        async with self._sf() as s:
+            rows = await s.execute(
+                select(PortAllocationRow).order_by(PortAllocationRow.host_port, PortAllocationRow.protocol)
+            )
+            return [_to_alloc(r) for r in rows.scalars()]
+
     async def release(self, app_id: int) -> None:
         """Delete every allocation belonging to `app_id`."""
         async with self._sf() as s, s.begin():

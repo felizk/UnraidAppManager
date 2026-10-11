@@ -28,21 +28,10 @@ from uam.contracts import (
     Vault,
 )
 from uam.domain import App, PortAllocation, ProxySettings, UpdateCheckResult
+from uam.services.template_export import ExportPlan as ExportPlan
 
 if TYPE_CHECKING:
     from uam.web.auth import AuthManager
-
-
-@dataclass(frozen=True)
-class ExportPlan:
-    """Mirror of T11's `ExportPlan` (same fields)."""
-
-    app_id: int
-    path: str
-    new_xml: str
-    old_xml: str | None
-    diff: str
-    changed: bool
 
 
 class OrchestratorService(Protocol):

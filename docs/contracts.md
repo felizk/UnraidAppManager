@@ -17,6 +17,7 @@ Additions made during T00 (already in the code):
   (for example `Port:53/udp`), because one container port can be declared twice, once
   per protocol.
 * Label name constants (`LABEL_MANAGED`, …) live in `uam/domain.py`.
+* `PortAllocator.allocations()` lists every stored allocation (added for `GET /api/ports`).
 
 Conventions:
 * All I/O is `async`.

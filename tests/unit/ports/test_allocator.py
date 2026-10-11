@@ -138,3 +138,15 @@ async def test_concurrent_allocations(tmp_db, settings, docker, apps) -> None:
     results = await asyncio.gather(*(a.allocate(i, [(80, "tcp", None), (53, "udp", None)]) for i in ids))
     ports = [(x.host_port, x.protocol) for r in results for x in r]
     assert len(ports) == len(set(ports)) == 40
+
+
+async def test_allocations_lists_everything_by_host_port(tmp_db, settings, docker, apps) -> None:
+    a = make(tmp_db, settings, docker)
+    first, second = await apps("a"), await apps("b")
+    await a.allocate(first, [(80, "tcp", None)])
+    await a.pin(second, [(53, "udp", 53)])
+    listed = await a.allocations()
+    assert [(x.app_id, x.host_port, x.protocol) for x in listed] == [
+        (second, 53, "udp"),
+        (first, 30000, "tcp"),
+    ]

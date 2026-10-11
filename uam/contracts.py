@@ -118,6 +118,10 @@ class PortAllocator(Protocol):
 
     async def in_use(self) -> set[tuple[int, Protocol_]]: ...
 
+    async def allocations(self) -> list[PortAllocation]:
+        """Every stored allocation, ordered by host port."""
+        ...
+
 
 @runtime_checkable
 class ProxyManager(Protocol):

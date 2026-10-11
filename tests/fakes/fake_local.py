@@ -101,6 +101,12 @@ class FakePortAllocator:
         for key in [k for k in self.allocs if k[0] == app_id]:
             del self.allocs[key]
 
+    async def allocations(self) -> list[PortAllocation]:
+        return sorted(
+            (PortAllocation(a, c, p, h) for (a, c, p), h in self.allocs.items()),
+            key=lambda x: (x.host_port, x.protocol),
+        )
+
     async def in_use(self) -> set[tuple[int, Protocol_]]:
         return {(h, p) for (_, _, p), h in self.allocs.items()} | set(self.external)
 
