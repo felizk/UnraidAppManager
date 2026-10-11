@@ -209,3 +209,14 @@ async def test_401_without_bearer_challenge_is_auth_error(client: HttpRegistryCl
         m.head("https://ghcr.io/v2/me/app/manifests/latest").respond(401)
         with pytest.raises(AuthError):
             await client.get_digest("ghcr.io/me/app", None)
+
+
+@respx.mock
+async def test_localhost_registry_uses_plain_http() -> None:
+    route = respx.head("http://localhost:5000/v2/app/manifests/dev").mock(
+        return_value=httpx.Response(200, headers={"Docker-Content-Digest": "sha256:local"})
+    )
+    client = HttpRegistryClient()
+    assert await client.get_digest("localhost:5000/app:dev", None) == "sha256:local"
+    assert route.called
+    await client.aclose()

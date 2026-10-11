@@ -79,7 +79,10 @@ class HttpRegistryClient:
         *,
         monotonic: Callable[[], float] = time.monotonic,
         now: Callable[[], datetime] = lambda: datetime.now(UTC),
+        insecure_hosts: frozenset[str] = frozenset({"localhost", "127.0.0.1"}),
     ) -> None:
+        # Hosts (without port) reached over plain HTTP, like Docker's insecure-registries default.
+        self._insecure_hosts = insecure_hosts
         self._client = client or httpx.AsyncClient(timeout=30.0, follow_redirects=True)
         self._monotonic = monotonic
         self._now = now
@@ -94,7 +97,8 @@ class HttpRegistryClient:
         ref = parse_image_ref(image_ref)
         if ref.digest:
             return ref.digest
-        url = f"https://{ref.registry}/v2/{ref.repository}/manifests/{ref.tag}"
+        scheme = "http" if ref.registry.split(":", 1)[0] in self._insecure_hosts else "https"
+        url = f"{scheme}://{ref.registry}/v2/{ref.repository}/manifests/{ref.tag}"
         key = (ref.registry, ref.repository, auth.username if auth else "")
 
         resp = await self._request("HEAD", url, key, auth)

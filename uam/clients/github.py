@@ -28,11 +28,14 @@ _XML_PROLOG_RE = re.compile(r"(?:\s*<\?xml[^>]*\?>|\s*<!--.*?-->|\s*<!DOCTYPE[^>
 
 
 def _is_template_path(path: str) -> bool:
-    """Return True for `*.xml` paths in a template directory or near the repo root."""
+    """Return True for `*.xml` files at the repo root or directly inside a template directory.
+
+    Matches docs/app-repo-guide.md §1 and uam-lint's UAM007 rule.
+    """
     if not path.endswith(".xml"):
         return False
     parts = path.split("/")
-    return (parts[0] in _TEMPLATE_DIRS and len(parts) > 1) or len(parts) <= _MAX_ROOT_DEPTH
+    return len(parts) == 1 or (len(parts) == _MAX_ROOT_DEPTH and parts[0] in _TEMPLATE_DIRS)
 
 
 def _root_is_container(xml: str) -> bool:

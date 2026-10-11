@@ -52,9 +52,10 @@ async def client(cache: InMemoryHttpCache, sleep_mock: AsyncMock) -> AsyncIterat
 def test_template_path_rules() -> None:
     assert _is_template_path("a.xml")
     assert _is_template_path("unraid/a.xml")
-    assert _is_template_path(".unraid/sub/dir/a.xml")
+    assert _is_template_path(".unraid/a.xml")
     assert _is_template_path("templates/a.xml")
-    assert _is_template_path("other/a.xml")
+    assert not _is_template_path(".unraid/sub/a.xml")
+    assert not _is_template_path("other/a.xml")
     assert not _is_template_path("other/deep/a.xml")
     assert not _is_template_path("unraid/a.txt")
 
