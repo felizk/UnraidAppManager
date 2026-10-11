@@ -157,6 +157,7 @@ uvx --from git+https://github.com/felizk/unraidappmanager uam-lint .            
 uvx --from git+https://github.com/felizk/unraidappmanager uam-lint . --base origin/main  # also check breaking changes
 ```
 
+`--base` needs the base commit locally; in CI check out with `fetch-depth: 0`.
 In CI, use the `lint` job in the kit's `publish.yml`, or the composite action
 `felizk/unraidappmanager/action/lint-template`. The UAM repo must be public, or Actions
 access to it must be allowed, for other repos to use the action.
@@ -166,7 +167,7 @@ access to it must be allowed, for other repos to use the action.
 | UAM001 | error | File is not well-formed XML, or the root isn't `<Container>` |
 | UAM002 | error | `Name` is missing or not a valid container name |
 | UAM003 | error | `Repository` is missing or not a valid image reference |
-| UAM004 | error | Duplicate `(Type, Target)` |
+| UAM004 | error | Duplicate `(Type, Target)`; for Ports, duplicate `(Target, Mode)` |
 | UAM005 | error | Port `Target` isn't 1–65535, or `Mode` isn't tcp/udp |
 | UAM006 | error | `WebUI` `[PORT:N]` refers to an undeclared port |
 | UAM007 | error | A template is outside the discovery locations |
