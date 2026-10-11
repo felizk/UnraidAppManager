@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>photosync</Name>
+  <Repository>ghcr.io/felizk/photosync:latest</Repository>
+  <Registry/>
+  <Network>bridge</Network>
+  <Privileged>false</Privileged>
+  <Shell>sh</Shell>
+  <Support/>
+  <Project>https://github.com/felizk/photosync</Project>
+  <Overview>Syncs photos from cloud storage to the array.</Overview>
+  <Category>MediaApp:Photos</Category>
+  <WebUI>http://[IP]:[PORT:5000]/</WebUI>
+  <Icon/>
+  <ExtraParams>--memory=1g --cpus 1.5 --hostname photosync --cap-add=SYS_ADMIN --log-opt max-size=10m --sysctl net.ipv4.ip_forward=1</ExtraParams>
+  <PostArgs/>
+  <CPUset>2,3</CPUset>
+  <Config Name="Web UI" Target="5000" Default="5000" Mode="tcp" Description="" Type="Port" Display="always" Required="true" Mask="false">5000</Config>
+  <Config Name="Photos" Target="/photos" Default="/mnt/user/photos" Mode="rw,slave" Description="Destination share" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/photos</Config>
+  <Config Name="Appdata" Target="/config" Default="[APPDATA]/photosync" Mode="rw" Description="" Type="Path" Display="always" Required="true" Mask="false">[APPDATA]/photosync</Config>
+  <Config Name="Cloud username" Target="CLOUD_USER" Default="" Mode="" Description="Account e-mail" Type="Variable" Display="always" Required="true" Mask="false"></Config>
+  <Config Name="Cloud password" Target="CLOUD_PASSWORD" Default="" Mode="" Description="App password" Type="Variable" Display="always" Required="true" Mask="true"></Config>
+  <Config Name="API token" Target="API_TOKEN" Default="" Mode="" Description="Optional API token" Type="Variable" Display="advanced" Required="false" Mask="true"></Config>
+  <Config Name="GPU" Target="/dev/dri" Default="/dev/dri" Mode="" Description="Hardware transcoding" Type="Device" Display="advanced" Required="false" Mask="false">/dev/dri</Config>
+</Container>

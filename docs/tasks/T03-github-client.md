@@ -19,8 +19,8 @@ against `https://api.github.com` (base URL configurable for tests).
   check; no full parse).
 - `get_template`: Contents API at `ref`, base64-decoded. Get `commit_sha` and
   `committed_at` from `GET /commits?path=&sha=&per_page=1`.
-- `latest_commit_for_path`: conditional request using an ETag stored in the
-  `http_cache` table. Cache keys include a hash of the token, never the token itself.
+- `latest_commit_for_path`: conditional request using an ETag stored through the injected
+  `HttpCache` Protocol (`SqlHttpCache` in production, `InMemoryHttpCache` in tests). Cache keys include a hash of the token, never the token itself.
   A 304 returns `None`.
 - Rate limits: track `x-ratelimit-remaining`/`-limit`/`-reset`. On a 403 or 429 with
   remaining = 0, raise `RateLimited(reset_at)`. `rate_limit_remaining_fraction()` returns

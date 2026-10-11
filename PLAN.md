@@ -178,6 +178,12 @@ parallel right after T00**. In practice, batches of 4–6 are easier to review:
 * Batch B: T08, T09, T10, T11, T12, T16, T17
 * Batch C: T13, then T14, then T15
 
+### Progress
+- [x] T00: scaffold, contracts, DB, fakes (`make check` green)
+- [ ] Batch A: T01–T07
+- [ ] Batch B: T08–T12, T16, T17
+- [ ] Batch C: T13, then T14, then T15
+
 ## 6. How to run this plan with subagents
 
 1. **The orchestrator (main session, stronger model) does T00 itself.** The contracts are
@@ -200,7 +206,7 @@ parallel right after T00**. In practice, batches of 4–6 are easier to review:
    change.
 5. After each batch, run the full suite before starting the next batch.
 
-## 7. Open questions (defaults chosen; override if you prefer)
+## 7. Decisions (defaults accepted 2026-10-11)
 
 1. **Unraid managed label:** `net.unraid.docker.managed=uam` (default) or `dockerman`?
    With `dockerman`, Unraid's own Edit/Update buttons work on exported templates, but
@@ -213,7 +219,7 @@ parallel right after T00**. In practice, batches of 4–6 are easier to review:
 4. **Port range:** a single global range `30000-30999` by default. Per-protocol or
    per-app ranges could be added later.
 5. **Secrets in overrides:** masked template values (from installs and imports) currently
-   sit in the `apps.overrides` JSON in plain text. Proposal: T00 stores the overrides of
-   masked configs encrypted with the vault key. Decide before T00 starts.
+   sit in the `apps.overrides` JSON in plain text. **Accepted:** the whole overrides dict is
+   encrypted through `FieldCipher` (done in T00; T02 provides the Fernet cipher).
 6. **Python vs Go:** Python is chosen for subagent productivity. Go would give a smaller
    single binary. The contracts translate one-to-one if this changes.

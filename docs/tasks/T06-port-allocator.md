@@ -10,7 +10,8 @@ out free host ports from the configured range and keeps each allocation stable f
 `uam/ports/**`, `tests/unit/ports/**`
 
 ## Constructor inputs
-A session factory (the `port_allocations` table), `SettingsStore`, `DockerEngine` (for
+A session factory (the `port_allocations` table, `uam/db/models.py: PortAllocationRow`, which
+has a `pinned` column for `pin()`), `SettingsStore`, `DockerEngine` (for
 published ports), and an optional `HostListenerProbe`.
 
 ## Requirements

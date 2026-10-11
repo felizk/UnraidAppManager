@@ -9,7 +9,9 @@ names follow the T09–T11 briefs.
 
 ## Auth
 - On first run (no password set), `/setup` takes the admin password. It is stored as an
-  argon2 hash in the settings table, under a separate key that is never exposed.
+  argon2 hash through `KeyValueStore` under the key `admin_password_hash`. It never goes
+  into `Settings`. The session-signing secret is stored there too, under
+  `session_secret`, and generated on first start.
 - `POST /api/login` sets a signed session cookie (itsdangerous, `HttpOnly`,
   `SameSite=Lax`, 7 days). `POST /api/logout`.
 - Every `/api/**` route except login/setup/health requires a session. The optional

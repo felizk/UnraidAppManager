@@ -36,6 +36,18 @@ supported ExtraParams, and lint rule IDs. **If your task changes any of that beh
 update the guide in the same commit and tell the orchestrator.** The lint rule table in
 §8 is the spec for T17.
 
+## Test helpers (from T00)
+- `tests/fakes`: `FakeBundle` (the `fakes` fixture) holds one of every fake, wired together.
+  `make_app(...)` and `make_source(...)` build domain objects with defaults.
+- `FakeDocker.fail_next(op)` injects failures (`pull`, `create`, `start`, `stop`, `remove`,
+  `rename`, `health`). `seed_container()` adds a container UAM didn't create.
+- `frozen_now` is a callable clock that freezes `datetime.now()`. Pass it wherever a
+  `clock` is expected, and use `.advance(timedelta)` to move time forward.
+- `tmp_db` is a migrated SQLite `Database` (`.session_factory`).
+- `load_template("simple-web.xml")` / `TEMPLATE_FIXTURES` come from `tests.conftest`.
+- Schema changes need an Alembic migration in `uam/db/migrations/versions/`.
+  `test_migrations_match_models` fails if the models and the migrations drift apart.
+
 ## Layout
 ```
 uam/

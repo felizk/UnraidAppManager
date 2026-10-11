@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>dnsbox</Name>
+  <Repository>ghcr.io/felizk/dnsbox:2</Repository>
+  <Registry>https://github.com/felizk/dnsbox/pkgs/container/dnsbox</Registry>
+  <Network>bridge</Network>
+  <Privileged>false</Privileged>
+  <Shell>bash</Shell>
+  <Support>https://github.com/felizk/dnsbox/issues</Support>
+  <Project>https://github.com/felizk/dnsbox</Project>
+  <Overview>DNS server with an admin web interface &amp; metrics.</Overview>
+  <Category>Network:DNS</Category>
+  <WebUI>http://[IP]:[PORT:8080]/admin</WebUI>
+  <Icon>https://raw.githubusercontent.com/felizk/dnsbox/main/unraid/icon.png</Icon>
+  <ExtraParams>--restart=unless-stopped</ExtraParams>
+  <PostArgs>--log-level info</PostArgs>
+  <CPUset/>
+  <Config Name="DNS (TCP)" Target="53" Default="53" Mode="tcp" Description="DNS over TCP" Type="Port" Display="always" Required="true" Mask="false">53</Config>
+  <Config Name="DNS (UDP)" Target="53" Default="53" Mode="udp" Description="DNS over UDP" Type="Port" Display="always" Required="true" Mask="false">53</Config>
+  <Config Name="Admin UI" Target="8080" Default="8080" Mode="tcp" Description="Admin web interface" Type="Port" Display="always" Required="true" Mask="false">8080</Config>
+  <Config Name="Metrics" Target="9100" Default="" Mode="tcp" Description="Prometheus metrics (optional)" Type="Port" Display="advanced" Required="false" Mask="false"></Config>
+  <Config Name="Config" Target="/etc/dnsbox" Default="/mnt/user/appdata/dnsbox" Mode="rw" Description="Configuration" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/dnsbox</Config>
+  <Config Name="Blocklists" Target="/blocklists" Default="/mnt/user/appdata/dnsbox/lists" Mode="ro" Description="Read-only blocklists" Type="Path" Display="advanced" Required="false" Mask="false">/mnt/user/appdata/dnsbox/lists</Config>
+  <Config Name="Upstream" Target="UPSTREAM_DNS" Default="1.1.1.1;9.9.9.9" Mode="" Description="Upstream resolvers" Type="Variable" Display="always" Required="false" Mask="false">1.1.1.1;9.9.9.9</Config>
+  <Config Name="Admin label" Target="com.example.role" Default="dns" Mode="" Description="" Type="Label" Display="advanced-hide" Required="false" Mask="false">dns</Config>
+</Container>

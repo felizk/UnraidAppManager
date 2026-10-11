@@ -1,8 +1,22 @@
 # Contracts
 
-This document is the source of truth for the interfaces between modules. T00 turns it into
-`uam/domain.py` (data types) and `uam/contracts.py` (Protocols), plus in-memory fakes in
-`tests/fakes/`. After T00, only the orchestrator changes these.
+This document describes the interfaces between modules. **T00 is done: the code in
+`uam/domain.py` and `uam/contracts.py` is now the source of truth.** If this document and the
+code disagree, the code wins. In-memory fakes for every Protocol live in `tests/fakes/`. Only
+the orchestrator changes any of these.
+
+Additions made during T00 (already in the code):
+* `FieldCipher`: symmetric encryption for secret columns. `SqlAppRepository` encrypts the
+  whole `overrides` dict with it, because overrides can hold masked template values.
+  T02 provides the Fernet implementation.
+* `KeyValueStore`: internal values such as the admin password hash (T12).
+* `HttpCache`: ETag cache used by the GitHub client (T03).
+* Methods named `list` are declared last in each Protocol, so `list[...]` annotations above
+  them still refer to the builtin. Keep doing this in implementations.
+* Override keys are `"<Type>:<Target>"`, except for ports, which are `"Port:<Target>/<mode>"`
+  (for example `Port:53/udp`), because one container port can be declared twice, once
+  per protocol.
+* Label name constants (`LABEL_MANAGED`, …) live in `uam/domain.py`.
 
 Conventions:
 * All I/O is `async`.

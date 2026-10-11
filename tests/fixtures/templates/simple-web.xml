@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>notes</Name>
+  <Repository>ghcr.io/felizk/notes:latest</Repository>
+  <Registry>https://github.com/felizk/notes/pkgs/container/notes</Registry>
+  <Network>bridge</Network>
+  <Privileged>false</Privileged>
+  <Shell>sh</Shell>
+  <Support>https://github.com/felizk/notes/issues</Support>
+  <Project>https://github.com/felizk/notes</Project>
+  <Overview>A tiny note taking web app.</Overview>
+  <Category>Productivity:</Category>
+  <WebUI>http://[IP]:[PORT:3000]/</WebUI>
+  <Icon>https://raw.githubusercontent.com/felizk/notes/main/unraid/icon.png</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <TemplateURL>https://raw.githubusercontent.com/felizk/notes/main/unraid/notes.xml</TemplateURL>
+  <Config Name="Web UI" Target="3000" Default="3000" Mode="tcp" Description="HTTP port" Type="Port" Display="always" Required="true" Mask="false">3000</Config>
+  <Config Name="Data" Target="/data" Default="/mnt/user/appdata/notes" Mode="rw" Description="Database and uploads" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/notes</Config>
+  <Config Name="TZ" Target="TZ" Default="Europe/Copenhagen" Mode="" Description="Time zone" Type="Variable" Display="always" Required="false" Mask="false">Europe/Copenhagen</Config>
+</Container>

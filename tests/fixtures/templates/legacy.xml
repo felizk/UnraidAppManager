@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Container>
+  <Name>oldtimer</Name>
+  <Repository>felizk/oldtimer</Repository>
+  <Registry>https://hub.docker.com/r/felizk/oldtimer/</Registry>
+  <BindTime>true</BindTime>
+  <Privileged>false</Privileged>
+  <Support/>
+  <Overview>An app still using the version 1 template format.</Overview>
+  <Category>Tools:</Category>
+  <WebUI>http://[IP]:[PORT:8000]/</WebUI>
+  <Icon/>
+  <ExtraParams/>
+  <Networking>
+    <Mode>bridge</Mode>
+    <Publish>
+      <Port>
+        <HostPort>8000</HostPort>
+        <ContainerPort>8000</ContainerPort>
+        <Protocol>tcp</Protocol>
+      </Port>
+      <Port>
+        <HostPort>1900</HostPort>
+        <ContainerPort>1900</ContainerPort>
+        <Protocol>udp</Protocol>
+      </Port>
+    </Publish>
+  </Networking>
+  <Data>
+    <Volume>
+      <HostDir>/mnt/user/appdata/oldtimer</HostDir>
+      <ContainerDir>/config</ContainerDir>
+      <Mode>rw</Mode>
+    </Volume>
+  </Data>
+  <Environment>
+    <Variable>
+      <Name>PUID</Name>
+      <Value>99</Value>
+    </Variable>
+    <Variable>
+      <Name>PGID</Name>
+      <Value>100</Value>
+    </Variable>
+  </Environment>
+</Container>
