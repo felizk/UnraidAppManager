@@ -19,7 +19,7 @@ from uam.contracts import (
     TemplateCodec,
     Vault,
 )
-from uam.domain import App, Source, TemplateConfig, UnraidTemplate, UpdateCheckResult
+from uam.domain import App, AppState, Source, TemplateConfig, UnraidTemplate, UpdateCheckResult
 from uam.errors import RateLimited
 
 log = logging.getLogger(__name__)
@@ -217,10 +217,13 @@ class UpdateChecker:
             needs_attention=app.needs_attention,
             checked_at=now,
         )
-        await self._auto_apply(app, result)
+        await self._auto_apply(app, result, newly)
         return result
 
-    async def _auto_apply(self, app: App, result: UpdateCheckResult) -> None:
+    async def _auto_apply(self, app: App, result: UpdateCheckResult, newly: bool) -> None:
+        # After a rolled-back update, wait for a new commit/digest instead of retrying the same one forever.
+        if app.state == AppState.FAILED_UPDATE and not newly:
+            return
         apply_image = result.image_changed and app.auto_update_image
         apply_template = result.template_changed and app.auto_update_template and not result.needs_attention
         if not (apply_image or apply_template):

@@ -307,3 +307,18 @@ def test_diff_and_helpers() -> None:
     assert resolve_image("localhost:5000/b", "2") == "localhost:5000/b:2"
     assert resolve_image("a/b@sha256:x", "2") == "a/b:2"
     assert resolve_image("a/b:1", None) == "a/b:1"
+
+
+async def test_failed_update_not_retried_until_new_target(env: Env) -> None:
+    app = await env.add_app(auto_update_image=True)
+    env.f.registry.set_digest(IMAGE, "sha256:new")
+    await env.checker.check(app)
+    assert len(env.updater.calls) == 1
+    failed = await env.stored(app)
+    failed.state = AppState.FAILED_UPDATE  # the orchestrator rolled the update back
+    await env.f.apps.save(failed)
+    await env.checker.check(await env.stored(app))
+    assert len(env.updater.calls) == 1  # same digest: no retry
+    env.f.registry.set_digest(IMAGE, "sha256:newer")
+    await env.checker.check(await env.stored(app))
+    assert len(env.updater.calls) == 2
