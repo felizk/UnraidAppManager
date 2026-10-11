@@ -1,0 +1,12 @@
+{% if rows %}
+<ul class="template-list">
+  {% for r in rows %}
+  <li>
+    {% if r.icon %}<img class="app-icon sm" src="{{ r.icon }}" alt="" width="24" height="24" loading="lazy">{% endif %}
+    <strong>{{ r.name }}</strong> <code>{{ r.path }}</code>
+    {% if r.error %}<span class="field-error">cannot parse: {{ r.error }}</span>
+    {% else %}<a role="button" class="sm" href="/apps/new?source={{ source.id }}&amp;path={{ r.path|urlencode }}">Add app</a>{% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% else %}<p>No templates found in {{ source.owner }}/{{ source.repo }}.</p>{% endif %}

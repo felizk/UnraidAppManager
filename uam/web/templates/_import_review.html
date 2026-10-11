@@ -1,0 +1,67 @@
+<article class="wizard">
+  <header><strong>{% if bulk %}Review: import selected containers{% else %}Review the import plan{% endif %}</strong>{% if not bulk %} &middot; step 3 of 3{% endif %}</header>
+
+  {% if skipped %}
+  <div class="flash error" role="alert">
+    <strong>Skipped:</strong>
+    <ul>{% for name, reason in skipped %}<li>{{ name }}: {{ reason }}</li>{% endfor %}</ul>
+  </div>
+  {% endif %}
+
+  {% for row in rows %}
+  {% set p = row.plan %}
+  <section class="plan">
+    <h3>{{ p.candidate.container_name }} <small>&rarr; {{ p.template_path }}</small></h3>
+    <p class="meta">
+      {% if p.new_source %}New source {{ p.new_source.owner }}/{{ p.new_source.repo }}@{{ p.new_source.ref }}{% else %}Source #{{ p.source_id }}{% endif %}
+      &middot; template commit <code>{{ p.template_commit[:12] }}</code>
+      {% if p.image_tag_override %}&middot; image tag {{ p.image_tag_override }}{% endif %}
+      {% if p.proxy.subdomain %}&middot; subdomain {{ p.proxy.subdomain }}{% endif %}
+      {% if p.adopt_proxy_host_id is not none %}&middot; claims proxy host #{{ p.adopt_proxy_host_id }}{% endif %}
+    </p>
+
+    {% if p.dropped %}
+    <div class="dropped" role="alert">
+      <strong>Settings that will be dropped</strong>
+      <ul>{% for d in p.dropped %}<li>{{ d }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+
+    {% if p.warnings %}
+    <div class="warn"><strong>Warnings</strong>
+      <ul>{% for w in p.warnings %}<li>{{ w }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+
+    <h4>Overrides</h4>
+    {% if row.overrides %}
+    <table>
+      <thead><tr><th>Key</th><th>Value</th></tr></thead>
+      <tbody>{% for k, val in row.overrides %}<tr><td><code>{{ k }}</code></td><td>{{ val }}</td></tr>{% endfor %}</tbody>
+    </table>
+    {% else %}<p>None: the template defaults are used.</p>{% endif %}
+
+    <h4>Pinned ports</h4>
+    {% if p.pinned_ports %}
+    <table>
+      <thead><tr><th>Container port</th><th>Protocol</th><th>Host port</th></tr></thead>
+      <tbody>{% for cport, proto, hport in p.pinned_ports %}<tr><td>{{ cport }}</td><td>{{ proto }}</td><td>{{ hport }}</td></tr>{% endfor %}</tbody>
+    </table>
+    {% else %}<p>None.</p>{% endif %}
+
+    {% if p.template_diff %}
+    <details>
+      <summary>Template diff (flash template vs. source template)</summary>
+      <pre class="diff">{{ p.template_diff|diff }}</pre>
+    </details>
+    {% endif %}
+  </section>
+  {% endfor %}
+
+  {% if rows %}
+  <form hx-post="/import/apply" hx-target="#wizard" hx-swap="innerHTML">
+    <input type="hidden" name="token" value="{{ token }}">
+    <button type="submit" hx-disabled-elt="this">{% if bulk %}Confirm and import {{ rows|length }} container(s){% else %}Confirm and import{% endif %}</button>
+  </form>
+  {% endif %}
+</article>

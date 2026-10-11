@@ -1,0 +1,21 @@
+<article class="wizard">
+  <header><strong>Import {{ c.container_name }}</strong> &middot; step 2 of 3: options</header>
+  {% if error %}<p class="field-error" role="alert">{{ error }}</p>{% endif %}
+  <form hx-post="/import/wizard/{{ c.container_name|urlencode }}/review" hx-target="#wizard" hx-swap="innerHTML">
+    {% for k, val in carry.items() %}<input type="hidden" name="{{ k }}" value="{{ val }}">{% endfor %}
+    <label><input type="checkbox" name="keep_host_ports" value="1" {% if o is not defined or o.keep_host_ports %}checked{% endif %}> Keep the current host ports</label>
+    {% if has_proxy_host %}
+    <label><input type="checkbox" name="claim_proxy_host" value="1" {% if o is not defined or o.claim_proxy_host %}checked{% endif %}> Claim the existing proxy host</label>
+    {% endif %}
+    <label>Subdomain
+      <input type="text" name="subdomain" value="{{ subdomain }}" placeholder="leave empty for no proxy host">
+    </label>
+    <label><input type="checkbox" name="recreate_now" value="1" {% if o is not defined or o.recreate_now %}checked{% endif %}> Recreate the container now (otherwise labels are applied on the next update)</label>
+    <label><input type="checkbox" name="auto_update_image" value="1" {% if o is not defined or o.auto_update_image %}checked{% endif %}> Update automatically when a new image is available</label>
+    <label><input type="checkbox" name="auto_update_template" value="1" {% if o is defined and o.auto_update_template %}checked{% endif %}> Apply template changes automatically</label>
+    {% if c.flash_template_path %}
+    <label><input type="checkbox" name="archive_flash_template" value="1" {% if o is defined and o.archive_flash_template %}checked{% endif %}> Archive the flash template (<code>{{ c.flash_template_path }}</code>)</label>
+    {% endif %}
+    <button type="submit" hx-disabled-elt="this">Next: review plan</button>
+  </form>
+</article>

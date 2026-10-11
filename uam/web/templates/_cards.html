@@ -1,0 +1,7 @@
+{% if views %}
+<div class="grid-cards">
+  {% for v in views %}{% include "_card.html" %}{% endfor %}
+</div>
+{% else %}
+<p>No apps yet. <a href="/sources">Add a source</a> and install an app from one of its templates, or <a href="/import">import existing containers</a>.</p>
+{% endif %}

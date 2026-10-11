@@ -1,0 +1,3 @@
+{% if subdomain and base_domain %}<code>{{ subdomain }}.{{ base_domain }}</code>
+{% elif subdomain %}<em>set a base domain in Settings to register <code>{{ subdomain }}</code></em>
+{% else %}<em>no subdomain: no proxy host will be created</em>{% endif %}

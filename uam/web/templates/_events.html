@@ -1,0 +1,7 @@
+{% if events %}
+<ul class="timeline">
+  {% for e in events %}
+  <li class="ev-{{ e.level }}"><time>{{ e.ts|stamp }}</time> <strong>{{ e.kind }}</strong> {{ e.message }}</li>
+  {% endfor %}
+</ul>
+{% else %}<p>No events yet.</p>{% endif %}

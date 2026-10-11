@@ -1,0 +1,37 @@
+<article class="wizard">
+  <header><strong>Import {{ c.container_name }}</strong> &middot; step 1 of 3: source and template</header>
+  {% if error %}<p class="field-error" role="alert">{{ error }}</p>{% endif %}
+  <form hx-post="/import/wizard/{{ c.container_name|urlencode }}/options" hx-target="#wizard" hx-swap="innerHTML">
+    <label>Source
+      <select name="source_choice">
+        {% for m in c.source_matches %}
+        <option value="match:{{ loop.index0 }}" {% if v.source_choice == 'match:' ~ loop.index0 %}selected{% endif %}>
+          {{ m.owner }}/{{ m.repo }}{% if m.template_path %} - {{ m.template_path }}{% endif %} ({{ m.confidence }}: {{ m.reason }}){% if m.source_id is none %} [new source]{% endif %}
+        </option>
+        {% endfor %}
+        {% for s in other_sources %}
+        <option value="source:{{ s.id }}" {% if v.source_choice == 'source:' ~ s.id %}selected{% endif %}>{{ s.owner }}/{{ s.repo }} (existing source)</option>
+        {% endfor %}
+        <option value="new" {% if v.source_choice == 'new' %}selected{% endif %}>New source...</option>
+      </select>
+    </label>
+    <label>Template path
+      <input type="text" name="template_path" value="{{ v.template_path }}" placeholder="unraid/app.xml" required>
+    </label>
+    <details {% if v.source_choice == 'new' %}open{% endif %}>
+      <summary>New source details</summary>
+      <div class="grid">
+        <label>Owner <input type="text" name="new_owner" value="{{ v.new_owner }}"></label>
+        <label>Repo <input type="text" name="new_repo" value="{{ v.new_repo }}"></label>
+        <label>Branch <input type="text" name="new_ref" value="{{ v.new_ref }}"></label>
+      </div>
+      <label>Credential
+        <select name="new_credential_id">
+          <option value="">(public repository)</option>
+          {% for cr in credentials %}<option value="{{ cr.id }}" {% if v.new_credential_id == cr.id|string %}selected{% endif %}>{{ cr.name }}</option>{% endfor %}
+        </select>
+      </label>
+    </details>
+    <button type="submit" hx-disabled-elt="this">Next: options</button>
+  </form>
+</article>

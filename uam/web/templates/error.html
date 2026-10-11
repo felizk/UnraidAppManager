@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Error - UAM{% endblock %}
+{% block content %}
+<h1>Something went wrong ({{ status }})</h1>
+<article class="flash error" role="alert">{{ message }}</article>
+<p><a href="/">Back to the dashboard</a></p>
+{% endblock %}

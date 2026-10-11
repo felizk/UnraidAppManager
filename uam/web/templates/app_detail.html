@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}{{ v.app.name }} - UAM{% endblock %}
+{% block content %}
+{% include "_summary.html" %}
+
+<p>
+  <a href="/apps/{{ v.app.id }}/edit" role="button" class="outline sm">Edit configuration</a>
+</p>
+
+<article>
+  <h2>Configuration</h2>
+  <dl class="kv">
+    <dt>Source</dt><dd>{{ source.owner }}/{{ source.repo }}@{{ source.ref }}</dd>
+    <dt>Template</dt><dd><code>{{ v.app.template_path }}</code></dd>
+    <dt>Installed commit</dt><dd><code>{{ (v.app.installed_template_commit or '-')[:12] }}</code></dd>
+    <dt>Image digest</dt><dd><code>{{ (v.app.installed_image_digest or '-')[:19] }}</code></dd>
+    <dt>Image tag override</dt><dd>{{ v.app.image_tag_override or '-' }}</dd>
+    <dt>Auto ports</dt><dd>{{ 'yes' if v.app.auto_ports else 'no' }}</dd>
+    <dt>Auto-update image</dt><dd>{{ 'yes' if v.app.auto_update_image else 'no' }}</dd>
+    <dt>Auto-update template</dt><dd>{{ 'yes' if v.app.auto_update_template else 'no' }}</dd>
+    <dt>Subdomain</dt><dd>{{ v.app.proxy.subdomain or '-' }}</dd>
+  </dl>
+  {% if overrides %}
+  <h3>Overrides</h3>
+  <table>
+    <thead><tr><th>Key</th><th>Value</th></tr></thead>
+    <tbody>
+    {% for k, val in overrides.items() %}<tr><td><code>{{ k }}</code></td><td>{{ val }}</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</article>
+
+<article>
+  <h2>Ports</h2>
+  {% if v.ports %}
+  <table>
+    <thead><tr><th>Container port</th><th>Protocol</th><th>Host port</th></tr></thead>
+    <tbody>
+    {% for p in v.ports %}<tr><td>{{ p.container_port }}</td><td>{{ p.protocol }}</td><td>{{ p.host_port }}</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p>No ports allocated.</p>{% endif %}
+</article>
+
+{% if v.update_template or v.update_image %}
+<article id="update-info">
+  <h2>Update available</h2>
+  {% if v.update_template %}
+  <p>Template: <code>{{ (v.app.installed_template_commit or '-')[:12] }}</code> &rarr;
+     <code>{{ v.app.available_template_commit[:12] }}</code>
+     {% if compare_url %}&middot; <a href="{{ compare_url }}" target="_blank" rel="noopener">view the changes on GitHub</a>{% endif %}</p>
+  {% endif %}
+  {% if v.update_image %}
+  <p>Image: <code>{{ (v.app.installed_image_digest or '-')[:19] }}</code> &rarr; <code>{{ v.app.available_image_digest[:19] }}</code></p>
+  {% endif %}
+</article>
+{% endif %}
+
+<article>
+  <h2>Events</h2>
+  <div id="events" hx-get="/fragments/apps/{{ v.app.id }}/events" hx-trigger="load, every 10s" hx-swap="innerHTML">Loading...</div>
+</article>
+
+<article>
+  <h2>Logs</h2>
+  <button class="sm outline" hx-get="/fragments/apps/{{ v.app.id }}/logs" hx-target="#logs" hx-swap="innerHTML">Refresh</button>
+  <div id="logs" hx-get="/fragments/apps/{{ v.app.id }}/logs" hx-trigger="load" hx-swap="innerHTML">Loading...</div>
+</article>
+
+<article>
+  <h2>Remove</h2>
+  <form hx-post="/apps/{{ v.app.id }}/uninstall" hx-confirm="Remove {{ v.app.name }}? The container is deleted.">
+    <label><input type="checkbox" name="delete_appdata" value="1"> Also delete its appdata directory</label>
+    <button type="submit" class="contrast sm">Uninstall</button>
+  </form>
+</article>
+{% endblock %}

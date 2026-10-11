@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Settings - UAM{% endblock %}
+{% block content %}
+{% macro text(name, label, hint='', type='text') %}
+<label>{{ label }}
+  <input type="{{ type }}" name="{{ name }}" value="{{ v.get(name, '') }}" {% if errors.get(name) %}aria-invalid="true"{% endif %}>
+  {% if errors.get(name) %}<small class="field-error">{{ errors.get(name) }}</small>{% elif hint %}<small>{{ hint }}</small>{% endif %}
+</label>
+{% endmacro %}
+<h1>Settings</h1>
+{% if saved %}<article class="flash ok" role="status">Settings saved.</article>{% endif %}
+<form hx-post="/settings" hx-target="#main" hx-select="#main" hx-swap="outerHTML">
+  {% if errors.get('_general') %}<p class="field-error" role="alert">{{ errors.get('_general') }}</p>{% endif %}
+  <fieldset>
+    <legend>Ports</legend>
+    <div class="grid">
+      {{ text('port_range_start', 'Port range start', type='number') }}
+      {{ text('port_range_end', 'Port range end', type='number') }}
+    </div>
+    {{ text('reserved_ports', 'Reserved ports', 'Comma-separated ports UAM must never allocate') }}
+    {{ text('host_ip', 'Host IP', 'Leave empty to detect the Unraid LAN IP') }}
+  </fieldset>
+  <fieldset>
+    <legend>Storage</legend>
+    {{ text('appdata_root', 'Appdata root') }}
+    {{ text('template_export_dir', 'Template export directory') }}
+    <label><input type="checkbox" name="template_export_include_secrets" value="1" {% if v.get('template_export_include_secrets') %}checked{% endif %}>
+      Include masked values (secrets) in exported templates by default</label>
+    {{ text('unraid_managed_label', 'Unraid managed label') }}
+  </fieldset>
+  <fieldset>
+    <legend>Nginx Proxy Manager</legend>
+    {{ text('npm_url', 'NPM URL', 'for example http://192.168.1.10:81') }}
+    <label>NPM credential
+      <select name="npm_credential_id">
+        <option value="">(none)</option>
+        {% for c in npm_credentials %}<option value="{{ c.id }}" {% if v.get('npm_credential_id') == c.id|string %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+      </select>
+      {% if errors.get('npm_credential_id') %}<small class="field-error">{{ errors.get('npm_credential_id') }}</small>{% endif %}
+    </label>
+    {{ text('base_domain', 'Base domain', 'Apps get <subdomain>.<base domain>') }}
+    {% if certs %}
+    <label>Default certificate
+      <select name="default_certificate_id">
+        <option value="">(none)</option>
+        {% for cid, cname in certs %}<option value="{{ cid }}" {% if v.get('default_certificate_id') == cid|string %}selected{% endif %}>{{ cname }}</option>{% endfor %}
+      </select>
+    </label>
+    {% else %}
+    {{ text('default_certificate_id', 'Default certificate id', type='number') }}
+    {% endif %}
+    <p>
+      <button type="button" class="sm outline" hx-post="/settings/test-npm" hx-target="#npm-result" hx-swap="innerHTML" hx-disabled-elt="this">Test NPM connection</button>
+      <span id="npm-result"></span>
+      <small>(uses the saved settings)</small>
+    </p>
+  </fieldset>
+  <fieldset>
+    <legend>Update checks</legend>
+    <div class="grid">
+      {{ text('hot_window_hours', 'Hot window (hours)', 'Apps changed within this window are checked often', type='number') }}
+      {{ text('hot_interval_minutes', 'Hot interval (minutes)', type='number') }}
+      {{ text('cold_interval_hours', 'Cold interval (hours)', type='number') }}
+    </div>
+  </fieldset>
+  <button type="submit" hx-disabled-elt="this">Save settings</button>
+</form>
+{% endblock %}

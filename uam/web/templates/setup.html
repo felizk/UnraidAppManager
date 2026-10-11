@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Set up - UAM{% endblock %}
+{% block nav %}{% endblock %}
+{% block content %}
+<article class="narrow">
+  <h1>Welcome to Unraid App Manager</h1>
+  <p>Choose an admin password (at least 8 characters).</p>
+  <form hx-post="/setup" hx-target="#main" hx-select="#main" hx-swap="outerHTML">
+    {% if error %}<p class="field-error" role="alert">{{ error }}</p>{% endif %}
+    <label>Password
+      <input type="password" name="password" autocomplete="new-password" minlength="8" autofocus required>
+    </label>
+    <label>Confirm password
+      <input type="password" name="confirm" autocomplete="new-password" minlength="8" required>
+    </label>
+    <button type="submit">Create password</button>
+  </form>
+</article>
+{% endblock %}

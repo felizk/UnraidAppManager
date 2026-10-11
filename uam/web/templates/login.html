@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Sign in - UAM{% endblock %}
+{% block nav %}{% endblock %}
+{% block content %}
+<article class="narrow">
+  <h1>Unraid App Manager</h1>
+  <form hx-post="/login" hx-target="#main" hx-select="#main" hx-swap="outerHTML">
+    {% if error %}<p class="field-error" role="alert">{{ error }}</p>{% endif %}
+    <label>Password
+      <input type="password" name="password" autocomplete="current-password" autofocus required>
+    </label>
+    <button type="submit">Sign in</button>
+  </form>
+</article>
+{% endblock %}

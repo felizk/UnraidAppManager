@@ -1,0 +1,12 @@
+<article class="wizard">
+  <header><strong>Import finished</strong></header>
+  <ul>
+    {% for r in results %}
+    <li>
+      {% if r.app_id is not none %}<span class="badge state-running">imported</span> <a href="/apps/{{ r.app_id }}">{{ r.name }}</a>
+      {% else %}<span class="field-error">failed</span> {{ r.name }}: {{ r.error }}{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  <p><a href="/">Go to the dashboard</a></p>
+</article>

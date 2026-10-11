@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Export - UAM{% endblock %}
+{% block content %}
+<h1>Export templates to flash</h1>
+<p>Writes an Unraid template for each selected app so they show up in Unraid's own Docker UI.</p>
+{% if apps %}
+<form hx-post="/export/preview" hx-target="#preview" hx-swap="innerHTML">
+  <fieldset>
+    {% for a in apps %}
+    <label><input type="checkbox" name="app_ids" value="{{ a.id }}" checked> {{ a.name }}</label>
+    {% endfor %}
+  </fieldset>
+  <button type="submit" hx-disabled-elt="this">Preview</button>
+</form>
+{% else %}<p>No apps to export.</p>{% endif %}
+<div id="preview"></div>
+{% endblock %}
