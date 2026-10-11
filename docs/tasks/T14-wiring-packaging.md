@@ -20,9 +20,10 @@
 - `unraid/unraid-app-manager.xml`: an Unraid template for UAM itself, with the mounts
   from PLAN.md §3 and WebUI `http://[IP]:[PORT:8484]/`. (UAM can manage its own
   updates later; that is a stretch goal and needs a self-update helper.)
-- README: install steps, required mounts, PAT scopes (`repo` for private repos and
-  `read:packages` for GHCR, or the fine-grained equivalents: Contents read + Packages
-  read), NPM setup, and the security notes (docker socket = root on the host).
+- README: install steps, required mounts, PAT scopes (a classic PAT with `repo` for
+  private repos and `read:packages` for GHCR; GHCR does not accept fine-grained PATs for
+  pulls at the time of writing), NPM setup, the security notes (docker socket = root on
+  the host), and a prominent link to `docs/app-repo-guide.md`.
 
 ## Acceptance
 - `docker build .` succeeds. The container starts with `UAM_FAKES=1` and `/api/health`

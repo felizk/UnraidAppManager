@@ -14,7 +14,7 @@ empty packages for every directory listed in the CLAUDE.md layout, `.github/work
 ## Steps
 1. Create `pyproject.toml` with the dependencies listed in CLAUDE.md. Dev dependencies: pytest,
    pytest-asyncio (auto mode), respx, ruff, mypy, time-machine. Configure ruff
-   (line length 110, rules `E,F,I,UP,B,ASYNC,S`) and strict mypy for `uam`.
+   (line length 110, rules `E,F,I,UP,B,ASYNC,S`) and strict mypy for `uam`. Add the console script `uam-lint = "uam.lint.cli:main"` (T17).
 2. `Makefile` with the targets `check`, `fmt`, `test`, `dev`, `openapi` (the last one runs `python -m uam.web.openapi > docs/openapi.json`; T12 provides that module).
 3. `domain.py`, `contracts.py`, `errors.py` and `settings.py`, exactly as in
    `docs/contracts.md`.
@@ -36,7 +36,8 @@ empty packages for every directory listed in the CLAUDE.md layout, `.github/work
 7. `tests/conftest.py`: fixtures `frozen_now`, `tmp_db`, and `fakes` (a bundle of all fakes).
 8. `tests/fixtures/templates/`: at least 4 real-world-shaped templates: a simple web app;
    one with several ports including UDP; one with masked variables and `ExtraParams`;
-   one in the legacy format with `<Networking><Publish><Port>`.
+   one in the legacy format with `<Networking><Publish><Port>`. Also copy
+   `docs/app-repo-kit/unraid/myapp.xml` as `kit-myapp.xml`.
 9. CI workflow that runs `make check`.
 
 ## Acceptance

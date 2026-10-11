@@ -18,6 +18,7 @@ container, registers a subdomain in Nginx Proxy Manager (NPM), and keeps it all 
 | F6 | Tiered update checks | "Hot" apps (template or image changed or installed within `hot_window`, default 7 days) are checked every `hot_interval` (default 5 min). Every other app is checked once per day. Checks are cheap: conditional GitHub requests (ETag, so a 304 costs no rate limit) and registry `HEAD` requests for the manifest digest. A per-app `auto_update` setting chooses between applying an update and only flagging it. |
 | F7 | Template export to flash | Runs only when you trigger it, per app or for all apps. Writes `my-<Name>.xml` with the resolved values into `/boot/config/plugins/dockerMan/templates-user`. You get a diff preview first, and the existing file is backed up before it is overwritten. |
 | F8 | Import existing apps | Scan the containers already on the server (typically ones created by Unraid's Docker tab, with a `my-<name>.xml` on flash). Match each one to a GitHub source and template, keep its current ports, settings, running image and NPM subdomain, then recreate it under UAM management. You review a plan first; settings the repo template can't express are listed before anything changes. |
+| F9 | App-repo guide and linter | [`docs/app-repo-guide.md`](docs/app-repo-guide.md) explains how to set up an app repo (for people and agents), with a drop-in kit in `docs/app-repo-kit/`. `uam-lint` (T17) enforces the guide's rules locally and in the app repo's CI. |
 
 Out of scope for v1 (stretch goals): GitHub webhooks for instant updates, Docker Compose
 apps, notifications (ntfy/Unraid notify), multi-user accounts, and registries other than
@@ -152,6 +153,7 @@ need `CLAUDE.md`, `docs/contracts.md` and its own brief.
 | T13 | Web UI (HTMX) | 3 | T12 | `uam/web/ui/`, `uam/web/templates/`, `uam/web/static/` |
 | T14 | Wiring, packaging, CI, UAM's own template | 4 | all | `uam/app.py`, `Dockerfile`, `.github/`, `unraid/` |
 | T16 | Import existing Unraid apps | 2 | T00 (fakes) | `uam/services/importer.py`, `uam/services/import_matching.py` |
+| T17 | `uam-lint` CLI and GitHub Action | 2 | T01 | `uam/lint/`, `action/lint-template/` |
 | T15 | Integration/E2E tests (real Docker, NPM in compose) | 4 | T14 | `tests/integration/` |
 
 ```
@@ -165,6 +167,7 @@ T00 ──┬─ T01 ─┬─ T08 ─┐
       ├─ T09 (fakes) ─┤
       ├─ T10 (fakes) ─┤
       ├─ T16 (fakes) ─┤
+      │  T01 ── T17 ──┤
       └─ T12 ── T13 ──┘
 ```
 
@@ -172,7 +175,7 @@ Because services and the web layer build against fakes, **up to 13 tasks can run
 parallel right after T00**. In practice, batches of 4–6 are easier to review:
 
 * Batch A: T01, T02, T03, T04, T05, T06, T07 (pure leaf modules)
-* Batch B: T08, T09, T10, T11, T12, T16
+* Batch B: T08, T09, T10, T11, T12, T16, T17
 * Batch C: T13, then T14, then T15
 
 ## 6. How to run this plan with subagents

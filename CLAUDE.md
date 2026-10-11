@@ -29,6 +29,13 @@ argon2-cffi, defusedxml.
 8. Commit message: `<TaskID>: <short title>`. One logical commit per task is fine.
 9. Finish with a report: what you built, deviations, open questions, and the test count.
 
+## App-repo guide
+`docs/app-repo-guide.md` and `docs/app-repo-kit/` describe UAM's behaviour to the people
+who maintain app repos: discovery paths, override keys, update and health rules,
+supported ExtraParams, and lint rule IDs. **If your task changes any of that behaviour,
+update the guide in the same commit and tell the orchestrator.** The lint rule table in
+§8 is the spec for T17.
+
 ## Layout
 ```
 uam/
