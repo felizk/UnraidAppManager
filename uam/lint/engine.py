@@ -21,6 +21,8 @@ from uam.unraid_template.codec import XmlTemplateCodec
 TEMPLATE_DIRS = frozenset({"unraid", ".unraid", "templates"})
 _SKIP_DIRS = frozenset(
     {".git", "node_modules", ".venv", "venv", "__pycache__", ".tox", ".mypy_cache", ".ruff_cache", "target"}
+    # Test fixtures, docs and agent worktrees often hold example templates that are not app templates.
+    | {".claude", "tests", "test", "fixtures", "docs", "examples"}
 )
 
 

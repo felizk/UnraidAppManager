@@ -170,7 +170,7 @@ access to it must be allowed, for other repos to use the action.
 | UAM004 | error | Duplicate `(Type, Target)`; for Ports, duplicate `(Target, Mode)` |
 | UAM005 | error | Port `Target` isn't 1–65535, or `Mode` isn't tcp/udp |
 | UAM006 | error | `WebUI` `[PORT:N]` refers to an undeclared port |
-| UAM007 | error | A template is outside the discovery locations |
+| UAM007 | error | A template is outside the discovery locations (`tests/`, `test/`, `fixtures/`, `docs/` and `examples/` are ignored) |
 | UAM101 | error (with `--base`) | A template file was moved or deleted |
 | UAM102 | warning (with `--base`) | A config `Target` was removed or renamed; user values will be lost |
 | UAM103 | warning (with `--base`) | A required config was added without a default; this blocks auto-update |

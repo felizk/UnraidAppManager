@@ -441,3 +441,17 @@ async def test_apply_does_not_archive_by_default(env: Env) -> None:
     flash = env.flash()
     await env.importer.apply(await plan(env))
     assert flash.exists()
+
+
+def test_own_container_id_from_mountinfo(tmp_path) -> None:
+    from uam.services.importer import own_container_id
+
+    cid = "a" * 64
+    info = tmp_path / "mountinfo"
+    info.write_text(
+        f"1 2 0:1 /var/lib/docker/containers/{cid}/hostname /etc/hostname rw - ext4 /dev/sda rw\n"
+    )
+    assert own_container_id(str(info)) == cid
+    info.write_text("1 2 0:1 / / rw - overlay overlay rw\n")
+    assert own_container_id(str(info)) is None
+    assert own_container_id(str(tmp_path / "missing")) is None

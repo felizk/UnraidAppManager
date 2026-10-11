@@ -110,6 +110,13 @@ def test_uam007(tmp_path: Path) -> None:
     ]
 
 
+def test_uam007_ignores_tests_and_docs(tmp_path: Path) -> None:
+    write(tmp_path, "unraid/ok.xml", template())
+    for rel in ("tests/fixtures/a.xml", "docs/kit/unraid/a.xml", "examples/b.xml", "test/c.xml"):
+        write(tmp_path, rel, template())
+    assert lint_repo(tmp_path)[0] == []
+
+
 @pytest.mark.parametrize("rel", ["app.xml", "unraid/a.xml", ".unraid/a.xml", "templates/a.xml"])
 def test_uam007_negative_discovery_locations(tmp_path: Path, rel: str) -> None:
     assert lint_one(tmp_path, template(), rel) == []

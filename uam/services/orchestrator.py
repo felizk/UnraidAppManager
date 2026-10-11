@@ -296,9 +296,9 @@ class Orchestrator:
     async def reconfigure(
         self,
         app_id: int,
-        overrides: dict[str, str] | None,
-        proxy: ProxySettings | None,
-        image_tag_override: str | None,
+        overrides: dict[str, str] | None = None,
+        proxy: ProxySettings | None = None,
+        image_tag_override: str | None = None,
     ) -> App:
         """Recreate the container with new settings, reusing the exact running image.
 

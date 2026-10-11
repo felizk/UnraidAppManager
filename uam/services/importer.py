@@ -67,6 +67,22 @@ _SECRET_NAME_RE = re.compile(r"PASS|SECRET|TOKEN|KEY|CREDENTIAL", re.IGNORECASE)
 _IMAGE_ENV = frozenset(
     {"PATH", "HOME", "HOSTNAME", "TERM", "LANG", "LANGUAGE", "LC_ALL", "PWD", "SHLVL", "container"}
 )
+_CONTAINER_ID_RE = re.compile(r"/containers/([0-9a-f]{64})/")
+
+
+def own_container_id(mountinfo: str = "/proc/self/mountinfo") -> str | None:
+    """UAM's own container id, read from the bind mounts Docker sets up (/etc/hostname etc.).
+
+    `HOSTNAME` alone isn't enough: with `--network host` it is the server's hostname.
+    """
+    try:
+        with open(mountinfo, encoding="utf-8") as f:
+            match = _CONTAINER_ID_RE.search(f.read())
+    except OSError:
+        return None
+    return match.group(1) if match else None
+
+
 _UNRAID_ENV = frozenset({"HOST_OS", "HOST_HOSTNAME", "HOST_CONTAINERNAME"})
 _UNRAID_ENV_PREFIXES = ("TCP_PORT_", "UDP_PORT_")
 _REMOVED = "(not in template; will be removed on recreate)"
@@ -236,6 +252,7 @@ class DefaultImporter:
         self._archive_dir = Path(archive_dir)
         self._clock = clock or (lambda: datetime.now(UTC))
         self._hostname = hostname if hostname is not None else os.environ.get("HOSTNAME", "")
+        self._own_id = own_container_id() if hostname is None else None
         self._flash_cache: dict[str, tuple[int, UnraidTemplate | None, str, str]] = {}
 
     # ------------------------------------------------------------------ scan
@@ -251,6 +268,8 @@ class DefaultImporter:
         return candidates
 
     def _is_own(self, info: ContainerInfo) -> bool:
+        if self._own_id and info.id == self._own_id:
+            return True
         return len(self._hostname) >= 12 and info.id.startswith(self._hostname)
 
     async def _context(self) -> _Context:

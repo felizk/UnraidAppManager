@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>unraid-app-manager</Name>
+  <Repository>ghcr.io/felizk/unraid-app-manager:latest</Repository>
+  <Registry>https://github.com/felizk/unraidappmanager/pkgs/container/unraid-app-manager</Registry>
+  <Network>bridge</Network>
+  <Privileged>false</Privileged>
+  <Shell>sh</Shell>
+  <Support>https://github.com/felizk/unraidappmanager/issues</Support>
+  <Project>https://github.com/felizk/unraidappmanager</Project>
+  <Overview>Install and update your own apps straight from GitHub repositories: automatic host ports, Nginx Proxy Manager subdomains, private repos and packages, and tiered update checks. Needs the Docker socket, which gives it root-equivalent access to the server.</Overview>
+  <Category>Tools: Productivity:</Category>
+  <WebUI>http://[IP]:[PORT:8484]/</WebUI>
+  <Icon>https://raw.githubusercontent.com/felizk/unraidappmanager/main/unraid/icon.png</Icon>
+  <ExtraParams>--restart=unless-stopped</ExtraParams>
+  <PostArgs/>
+  <Config Name="Web UI" Target="8484" Default="8484" Mode="tcp" Description="HTTP port of the UAM web interface" Type="Port" Display="always" Required="true" Mask="false">8484</Config>
+  <Config Name="Data" Target="/data" Default="/mnt/user/appdata/unraid-app-manager" Mode="rw" Description="Database, encryption key and template backups" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/unraid-app-manager</Config>
+  <Config Name="Docker socket" Target="/var/run/docker.sock" Default="/var/run/docker.sock" Mode="rw" Description="Lets UAM create and update containers" Type="Path" Display="always" Required="true" Mask="false">/var/run/docker.sock</Config>
+  <Config Name="Unraid user templates" Target="/unraid-templates" Default="/boot/config/plugins/dockerMan/templates-user" Mode="rw" Description="Where 'Write templates to flash' puts my-*.xml files (and where import reads them)" Type="Path" Display="always" Required="true" Mask="false">/boot/config/plugins/dockerMan/templates-user</Config>
+  <Config Name="Host /proc (read-only)" Target="/host/proc" Default="/proc" Mode="ro" Description="Optional: detects ports used by host services and the server's LAN IP" Type="Path" Display="advanced" Required="false" Mask="false">/proc</Config>
+  <Config Name="Encryption key" Target="UAM_SECRET_KEY" Default="" Mode="" Description="Optional Fernet key for stored secrets; generated into /data/secret.key when empty" Type="Variable" Display="advanced" Required="false" Mask="true"></Config>
+  <Config Name="API token" Target="UAM_API_TOKEN" Default="" Mode="" Description="Optional bearer token for scripting the REST API" Type="Variable" Display="advanced" Required="false" Mask="true"></Config>
+</Container>
