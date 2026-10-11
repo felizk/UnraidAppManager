@@ -180,7 +180,7 @@ parallel right after T00**. In practice, batches of 4–6 are easier to review:
 
 ### Progress
 - [x] T00: scaffold, contracts, DB, fakes (`make check` green)
-- [ ] Batch A: T01–T07
+- [x] Batch A: T01–T07
 - [ ] Batch B: T08–T12, T16, T17
 - [ ] Batch C: T13, then T14, then T15
 
@@ -208,7 +208,7 @@ parallel right after T00**. In practice, batches of 4–6 are easier to review:
 
 ## 7. Decisions (defaults accepted 2026-10-11)
 
-1. **Unraid managed label:** `net.unraid.docker.managed=uam` (default) or `dockerman`?
+1. **Unraid managed label** (confirmed by T05's research, see `docs/unraid-labels.md`: any value other than `dockerman` makes Unraid show the container as "3rd Party", with no update check, no Edit link and no autostart toggle; icon and WebUI labels still work): `net.unraid.docker.managed=uam` (default) or `dockerman`?
    With `dockerman`, Unraid's own Edit/Update buttons work on exported templates, but
    Unraid may also try to update the containers itself.
 2. **Auto-update default for new apps:** default is *on* for image-digest changes and

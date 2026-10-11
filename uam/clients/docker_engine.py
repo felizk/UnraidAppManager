@@ -80,7 +80,8 @@ def build_create_kwargs(spec: ContainerSpec) -> dict[str, Any]:
     if spec.network != "host" and spec.ports:
         kwargs["ports"] = {f"{p.container_port}/{p.protocol}": (p.host_ip, p.host_port) for p in spec.ports}
     if spec.mounts:
-        kwargs["volumes"] = {m.host_path: {"bind": m.container_path, "mode": m.mode} for m in spec.mounts}
+        # List form ("host:container:mode") so one host path can be mounted at several container paths.
+        kwargs["volumes"] = [f"{m.host_path}:{m.container_path}:{m.mode}" for m in spec.mounts]
     if spec.devices:
         kwargs["devices"] = list(spec.devices)
     if spec.restart_policy:

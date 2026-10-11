@@ -109,10 +109,10 @@ def test_create_kwargs_full_spec() -> None:
         "network_mode": "br0",
         "privileged": True,
         "ports": {"8080/tcp": ("", 30001), "53/udp": ("10.0.0.2", 30002)},
-        "volumes": {
-            "/mnt/user/appdata/app": {"bind": "/config", "mode": "rw"},
-            "/mnt/media": {"bind": "/media", "mode": "ro"},
-        },
+        "volumes": [
+            "/mnt/user/appdata/app:/config:rw",
+            "/mnt/media:/media:ro",
+        ],
         "devices": ["/dev/dri:/dev/dri:rwm"],
         "restart_policy": {"Name": "unless-stopped"},
         "hostname": "myhost",
