@@ -23,6 +23,7 @@ from uam.contracts import (
     Vault,
 )
 from uam.domain import (
+    LABEL_SOURCE,
     App,
     AppState,
     ContainerInfo,
@@ -88,12 +89,22 @@ class Orchestrator:
     async def _event(self, app_id: int | None, kind: str, message: str, level: str = "info") -> None:
         await self._events.record(app_id, kind, message, level)
 
-    async def _fetch(self, app: App) -> tuple[UnraidTemplate, str]:
-        """Fetch and parse the app's template; returns (template, commit sha)."""
+    async def _fetch(self, app: App, at_commit: str | None = None) -> tuple[UnraidTemplate, str]:
+        """Fetch and parse the app's template at the source head, or at `at_commit` when given.
+
+        Returns (template, commit sha).
+        """
         source = await self._sources.get(app.source_id)
+        if at_commit is not None:
+            source = replace(source, ref=at_commit)
         token = await self._vault.reveal(source.credential_id) if source.credential_id is not None else None
         found = await self._github.get_template(source, app.template_path, token)
         return self._codec.parse(found.xml), found.commit_sha
+
+    async def _with_source_label(self, app: App, spec: ContainerSpec) -> ContainerSpec:
+        """Add the `uam.source` label (the resolver doesn't know the source)."""
+        source = await self._sources.get(app.source_id)
+        return replace(spec, labels={**spec.labels, LABEL_SOURCE: f"{source.owner}/{source.repo}"})
 
     async def _find_container(self, app: App) -> ContainerInfo | None:
         """Locate the app's container by id first, then by name."""
@@ -169,7 +180,7 @@ class Orchestrator:
                 resolved = await self._resolver.resolve(
                     replace(app, installed_template_commit=commit), template
                 )
-                spec = resolved.spec
+                spec = await self._with_source_label(app, resolved.spec)
                 stage = "pull"
                 digest = await self._pull(app.id, "install", spec.image)
                 stage = "create"
@@ -275,8 +286,8 @@ class Orchestrator:
     async def update(self, app_id: int, apply_template: bool, apply_image: bool) -> App:
         """Blue/green update. `apply_image=False` reuses the installed image digest.
 
-        The template is always fetched from the source head; `apply_template` decides whether
-        the recorded template commit advances.
+        `apply_template=True` deploys the template at the source head; otherwise the installed
+        template commit is used, so template changes are never applied without being asked for.
         """
         async with self.locks.hold(app_id):
             app = await self._apps.get(app_id)
@@ -323,16 +334,12 @@ class Orchestrator:
         renamed = False
         new_id: str | None = None
         try:
-            template, head_commit = await self._fetch(app)
-            commit = (
-                head_commit
-                if apply_template or app.installed_template_commit is None
-                else (app.installed_template_commit)
-            )
+            pinned_commit = None if apply_template else app.installed_template_commit
+            template, commit = await self._fetch(app, pinned_commit)
             resolved = await self._resolver.resolve(
                 replace(candidate, installed_template_commit=commit), template
             )
-            spec: ContainerSpec = resolved.spec
+            spec: ContainerSpec = await self._with_source_label(app, resolved.spec)
             pin = app.installed_image_digest
             reuse = not pull_new_image and pin is not None
             if reuse and pin is not None:
@@ -386,6 +393,7 @@ class Orchestrator:
         app.labels_pending = False
         if apply_template and app.available_template_commit in (None, commit):
             app.available_template_commit = None
+            app.needs_attention = None
         if not reuse and app.available_image_digest in (None, digest):
             app.available_image_digest = None
         if op == "update":

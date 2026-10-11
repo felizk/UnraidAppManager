@@ -65,7 +65,11 @@ class Env:
 @pytest.fixture
 async def env(fakes: FakeBundle, frozen_now: FrozenClock) -> Env:
     await fakes.sources.add(make_source())
-    fakes.github.put_file("felizk", "notes", "unraid/notes.xml", load_template("simple-web.xml"))
+    xml = load_template("simple-web.xml")
+    head = fakes.github.put_file("felizk", "notes", "unraid/notes.xml", xml)
+    # The same template is also reachable by commit sha (installed-commit fetches use ref=<sha>).
+    for ref in (head.commit_sha, "abc"):
+        fakes.github.put_file("felizk", "notes", "unraid/notes.xml", xml, ref=ref, commit_sha=ref)
     fakes.docker.set_image(IMAGE, OLD)
     return Env(fakes, frozen_now)
 
@@ -556,3 +560,19 @@ async def test_sync_state_skips_busy_and_transitional_apps(env: Env) -> None:
         await env.orch.sync_state()
     assert (await env.f.apps.get(busy)).state == AppState.RUNNING
     assert (await env.f.apps.get(installing)).state == AppState.INSTALLING
+
+
+async def test_image_only_update_keeps_installed_template(env: Env) -> None:
+    app_id = await env.installed()
+    installed = (await env.f.apps.get(app_id)).installed_template_commit
+    changed = load_template("simple-web.xml").replace("Europe/Copenhagen", "UTC")
+    env.f.github.put_file("felizk", "notes", "unraid/notes.xml", changed)
+    env.f.docker.set_image(IMAGE, "sha256:" + "f" * 64)
+    await env.orch.update(app_id, apply_template=False, apply_image=True)
+    app = await env.f.apps.get(app_id)
+    assert app.installed_template_commit == installed
+    assert env.f.docker.specs[app.container_id or ""].env["TZ"] == "Europe/Copenhagen"
+    await env.orch.update(app_id, apply_template=True, apply_image=False)
+    app = await env.f.apps.get(app_id)
+    assert env.f.docker.specs[app.container_id or ""].env["TZ"] == "UTC"
+    assert env.f.docker.specs[app.container_id or ""].labels["uam.source"] == "felizk/notes"
