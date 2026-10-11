@@ -1,0 +1,3507 @@
+{
+  "components": {
+    "schemas": {
+      "AcceptedOut": {
+        "properties": {
+          "app_id": {
+            "title": "App Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "app_id"
+        ],
+        "title": "AcceptedOut",
+        "type": "object"
+      },
+      "AppCreate": {
+        "properties": {
+          "auto_ports": {
+            "default": true,
+            "title": "Auto Ports",
+            "type": "boolean"
+          },
+          "install": {
+            "default": true,
+            "title": "Install",
+            "type": "boolean"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "overrides": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Overrides",
+            "type": "object"
+          },
+          "proxy": {
+            "$ref": "#/components/schemas/ProxyIn"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "integer"
+          },
+          "template_path": {
+            "minLength": 1,
+            "title": "Template Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_id",
+          "template_path"
+        ],
+        "title": "AppCreate",
+        "type": "object"
+      },
+      "AppOut": {
+        "properties": {
+          "auto_ports": {
+            "title": "Auto Ports",
+            "type": "boolean"
+          },
+          "auto_update_image": {
+            "title": "Auto Update Image",
+            "type": "boolean"
+          },
+          "auto_update_template": {
+            "title": "Auto Update Template",
+            "type": "boolean"
+          },
+          "available_image_digest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Available Image Digest"
+          },
+          "available_template_commit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Available Template Commit"
+          },
+          "container_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Container Id"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "image_tag_override": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Tag Override"
+          },
+          "installed_image_digest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Installed Image Digest"
+          },
+          "installed_template_commit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Installed Template Commit"
+          },
+          "labels_pending": {
+            "title": "Labels Pending",
+            "type": "boolean"
+          },
+          "last_change_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Change At"
+          },
+          "last_checked_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Checked At"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "needs_attention": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Needs Attention"
+          },
+          "next_check_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Check At"
+          },
+          "overrides": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Overrides",
+            "type": "object"
+          },
+          "proxy": {
+            "$ref": "#/components/schemas/ProxyIn"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "integer"
+          },
+          "state": {
+            "$ref": "#/components/schemas/AppState"
+          },
+          "template_path": {
+            "title": "Template Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "source_id",
+          "template_path",
+          "name",
+          "overrides",
+          "image_tag_override",
+          "auto_ports",
+          "auto_update_image",
+          "auto_update_template",
+          "proxy",
+          "state",
+          "installed_template_commit",
+          "installed_image_digest",
+          "container_id",
+          "available_template_commit",
+          "available_image_digest",
+          "needs_attention",
+          "last_change_at",
+          "last_checked_at",
+          "next_check_at",
+          "last_error",
+          "labels_pending"
+        ],
+        "title": "AppOut",
+        "type": "object"
+      },
+      "AppPatch": {
+        "properties": {
+          "auto_ports": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Auto Ports"
+          },
+          "auto_update_image": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Auto Update Image"
+          },
+          "auto_update_template": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Auto Update Template"
+          },
+          "image_tag_override": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Tag Override"
+          },
+          "overrides": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Overrides"
+          },
+          "proxy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProxyIn"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "title": "AppPatch",
+        "type": "object"
+      },
+      "AppState": {
+        "enum": [
+          "not_installed",
+          "installing",
+          "running",
+          "stopped",
+          "updating",
+          "failed",
+          "failed_update",
+          "removing"
+        ],
+        "title": "AppState",
+        "type": "string"
+      },
+      "AppUpdateIn": {
+        "properties": {
+          "apply_image": {
+            "default": true,
+            "title": "Apply Image",
+            "type": "boolean"
+          },
+          "apply_template": {
+            "default": true,
+            "title": "Apply Template",
+            "type": "boolean"
+          }
+        },
+        "title": "AppUpdateIn",
+        "type": "object"
+      },
+      "AuthStatusOut": {
+        "properties": {
+          "authenticated": {
+            "title": "Authenticated",
+            "type": "boolean"
+          },
+          "setup_required": {
+            "title": "Setup Required",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "setup_required",
+          "authenticated"
+        ],
+        "title": "AuthStatusOut",
+        "type": "object"
+      },
+      "CredentialIn": {
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/CredentialKind"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "registry_host": {
+            "default": "",
+            "title": "Registry Host",
+            "type": "string"
+          },
+          "secret": {
+            "minLength": 1,
+            "title": "Secret",
+            "type": "string"
+          },
+          "username": {
+            "default": "",
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "kind",
+          "secret"
+        ],
+        "title": "CredentialIn",
+        "type": "object"
+      },
+      "CredentialKind": {
+        "enum": [
+          "github_pat",
+          "registry",
+          "npm"
+        ],
+        "title": "CredentialKind",
+        "type": "string"
+      },
+      "CredentialOut": {
+        "description": "A credential without its secret.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/CredentialKind"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "registry_host": {
+            "title": "Registry Host",
+            "type": "string"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "username",
+          "registry_host"
+        ],
+        "title": "CredentialOut",
+        "type": "object"
+      },
+      "CredentialTestOut": {
+        "properties": {
+          "detail": {
+            "default": "",
+            "title": "Detail",
+            "type": "string"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "scopes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Scopes",
+            "type": "array"
+          },
+          "tested": {
+            "default": true,
+            "title": "Tested",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ],
+        "title": "CredentialTestOut",
+        "type": "object"
+      },
+      "DiscoveredTemplateOut": {
+        "properties": {
+          "commit_sha": {
+            "title": "Commit Sha",
+            "type": "string"
+          },
+          "committed_at": {
+            "format": "date-time",
+            "title": "Committed At",
+            "type": "string"
+          },
+          "icon": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icon"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "parse_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parse Error"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "repository": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Repository"
+          },
+          "sha": {
+            "title": "Sha",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "sha",
+          "commit_sha",
+          "committed_at"
+        ],
+        "title": "DiscoveredTemplateOut",
+        "type": "object"
+      },
+      "ExportApplyOut": {
+        "properties": {
+          "written": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Written",
+            "type": "array"
+          }
+        },
+        "required": [
+          "written"
+        ],
+        "title": "ExportApplyOut",
+        "type": "object"
+      },
+      "ExportApplyRequest": {
+        "properties": {
+          "include_secrets": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Include Secrets"
+          },
+          "plans": {
+            "items": {
+              "$ref": "#/components/schemas/ExportPlanModel"
+            },
+            "title": "Plans",
+            "type": "array"
+          }
+        },
+        "required": [
+          "plans"
+        ],
+        "title": "ExportApplyRequest",
+        "type": "object"
+      },
+      "ExportPlanModel": {
+        "properties": {
+          "app_id": {
+            "title": "App Id",
+            "type": "integer"
+          },
+          "changed": {
+            "title": "Changed",
+            "type": "boolean"
+          },
+          "diff": {
+            "default": "",
+            "title": "Diff",
+            "type": "string"
+          },
+          "new_xml": {
+            "title": "New Xml",
+            "type": "string"
+          },
+          "old_xml": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Old Xml"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "app_id",
+          "path",
+          "new_xml",
+          "changed"
+        ],
+        "title": "ExportPlanModel",
+        "type": "object"
+      },
+      "ExportPlanRequest": {
+        "properties": {
+          "app_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "App Ids"
+          }
+        },
+        "title": "ExportPlanRequest",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HealthOut": {
+        "properties": {
+          "status": {
+            "const": "ok",
+            "default": "ok",
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "HealthOut",
+        "type": "object"
+      },
+      "ImportCandidate": {
+        "properties": {
+          "blockers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Blockers",
+            "type": "array"
+          },
+          "container_id": {
+            "title": "Container Id",
+            "type": "string"
+          },
+          "container_name": {
+            "title": "Container Name",
+            "type": "string"
+          },
+          "flash_template": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UnraidTemplate"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "flash_template_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Flash Template Path"
+          },
+          "image": {
+            "title": "Image",
+            "type": "string"
+          },
+          "proxy_host": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProxyHost"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "published_ports": {
+            "items": {
+              "$ref": "#/components/schemas/PortBinding"
+            },
+            "title": "Published Ports",
+            "type": "array"
+          },
+          "source_matches": {
+            "items": {
+              "$ref": "#/components/schemas/SourceMatch"
+            },
+            "title": "Source Matches",
+            "type": "array"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "unraid_managed": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unraid Managed"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "container_id",
+          "container_name",
+          "image",
+          "state",
+          "unraid_managed",
+          "flash_template_path",
+          "flash_template",
+          "source_matches",
+          "published_ports",
+          "proxy_host",
+          "blockers",
+          "warnings"
+        ],
+        "title": "ImportCandidate",
+        "type": "object"
+      },
+      "ImportOptions": {
+        "properties": {
+          "archive_flash_template": {
+            "default": false,
+            "title": "Archive Flash Template",
+            "type": "boolean"
+          },
+          "auto_update_image": {
+            "default": true,
+            "title": "Auto Update Image",
+            "type": "boolean"
+          },
+          "auto_update_template": {
+            "default": false,
+            "title": "Auto Update Template",
+            "type": "boolean"
+          },
+          "claim_proxy_host": {
+            "default": true,
+            "title": "Claim Proxy Host",
+            "type": "boolean"
+          },
+          "keep_host_ports": {
+            "default": true,
+            "title": "Keep Host Ports",
+            "type": "boolean"
+          },
+          "recreate_now": {
+            "default": true,
+            "title": "Recreate Now",
+            "type": "boolean"
+          },
+          "subdomain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subdomain"
+          }
+        },
+        "title": "ImportOptions",
+        "type": "object"
+      },
+      "ImportPlan": {
+        "properties": {
+          "adopt_proxy_host_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adopt Proxy Host Id"
+          },
+          "candidate": {
+            "$ref": "#/components/schemas/ImportCandidate"
+          },
+          "dropped": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Dropped",
+            "type": "array"
+          },
+          "image_tag_override": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Tag Override"
+          },
+          "installed_image_digest": {
+            "title": "Installed Image Digest",
+            "type": "string"
+          },
+          "new_source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NewSource"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "options": {
+            "$ref": "#/components/schemas/ImportOptions"
+          },
+          "overrides": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Overrides",
+            "type": "object"
+          },
+          "pinned_ports": {
+            "items": {
+              "maxItems": 3,
+              "minItems": 3,
+              "prefixItems": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "enum": [
+                    "tcp",
+                    "udp"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Pinned Ports",
+            "type": "array"
+          },
+          "proxy": {
+            "$ref": "#/components/schemas/ProxySettings"
+          },
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Id"
+          },
+          "template_commit": {
+            "title": "Template Commit",
+            "type": "string"
+          },
+          "template_diff": {
+            "title": "Template Diff",
+            "type": "string"
+          },
+          "template_path": {
+            "title": "Template Path",
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "candidate",
+          "source_id",
+          "new_source",
+          "template_path",
+          "template_commit",
+          "overrides",
+          "image_tag_override",
+          "installed_image_digest",
+          "pinned_ports",
+          "proxy",
+          "adopt_proxy_host_id",
+          "options",
+          "template_diff",
+          "dropped",
+          "warnings"
+        ],
+        "title": "ImportPlan",
+        "type": "object"
+      },
+      "ImportPlanRequest": {
+        "properties": {
+          "container_name": {
+            "minLength": 1,
+            "title": "Container Name",
+            "type": "string"
+          },
+          "new_source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NewSource"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "options": {
+            "$ref": "#/components/schemas/ImportOptions"
+          },
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Id"
+          },
+          "template_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Path"
+          }
+        },
+        "required": [
+          "container_name"
+        ],
+        "title": "ImportPlanRequest",
+        "type": "object"
+      },
+      "LogsOut": {
+        "properties": {
+          "app_id": {
+            "title": "App Id",
+            "type": "integer"
+          },
+          "logs": {
+            "title": "Logs",
+            "type": "string"
+          },
+          "tail": {
+            "title": "Tail",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "app_id",
+          "tail",
+          "logs"
+        ],
+        "title": "LogsOut",
+        "type": "object"
+      },
+      "NamedIdOut": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "NamedIdOut",
+        "type": "object"
+      },
+      "NewSource": {
+        "properties": {
+          "credential_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credential Id"
+          },
+          "owner": {
+            "title": "Owner",
+            "type": "string"
+          },
+          "ref": {
+            "default": "main",
+            "title": "Ref",
+            "type": "string"
+          },
+          "repo": {
+            "title": "Repo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo"
+        ],
+        "title": "NewSource",
+        "type": "object"
+      },
+      "OkOut": {
+        "properties": {
+          "ok": {
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "title": "OkOut",
+        "type": "object"
+      },
+      "PasswordIn": {
+        "properties": {
+          "password": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "password"
+        ],
+        "title": "PasswordIn",
+        "type": "object"
+      },
+      "PortAllocationOut": {
+        "properties": {
+          "app_id": {
+            "title": "App Id",
+            "type": "integer"
+          },
+          "container_port": {
+            "title": "Container Port",
+            "type": "integer"
+          },
+          "host_port": {
+            "title": "Host Port",
+            "type": "integer"
+          },
+          "protocol": {
+            "title": "Protocol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "app_id",
+          "container_port",
+          "protocol",
+          "host_port"
+        ],
+        "title": "PortAllocationOut",
+        "type": "object"
+      },
+      "PortBinding": {
+        "properties": {
+          "container_port": {
+            "title": "Container Port",
+            "type": "integer"
+          },
+          "host_ip": {
+            "default": "",
+            "title": "Host Ip",
+            "type": "string"
+          },
+          "host_port": {
+            "title": "Host Port",
+            "type": "integer"
+          },
+          "protocol": {
+            "enum": [
+              "tcp",
+              "udp"
+            ],
+            "title": "Protocol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "container_port",
+          "protocol",
+          "host_port"
+        ],
+        "title": "PortBinding",
+        "type": "object"
+      },
+      "PortInUseOut": {
+        "properties": {
+          "host_port": {
+            "title": "Host Port",
+            "type": "integer"
+          },
+          "protocol": {
+            "title": "Protocol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "host_port",
+          "protocol"
+        ],
+        "title": "PortInUseOut",
+        "type": "object"
+      },
+      "PortsOut": {
+        "properties": {
+          "allocations": {
+            "items": {
+              "$ref": "#/components/schemas/PortAllocationOut"
+            },
+            "title": "Allocations",
+            "type": "array"
+          },
+          "in_use": {
+            "items": {
+              "$ref": "#/components/schemas/PortInUseOut"
+            },
+            "title": "In Use",
+            "type": "array"
+          },
+          "range_end": {
+            "title": "Range End",
+            "type": "integer"
+          },
+          "range_start": {
+            "title": "Range Start",
+            "type": "integer"
+          },
+          "reserved": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Reserved",
+            "type": "array"
+          }
+        },
+        "required": [
+          "range_start",
+          "range_end",
+          "reserved",
+          "allocations",
+          "in_use"
+        ],
+        "title": "PortsOut",
+        "type": "object"
+      },
+      "ProxyHost": {
+        "properties": {
+          "domain_names": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Domain Names",
+            "type": "array"
+          },
+          "forward_host": {
+            "title": "Forward Host",
+            "type": "string"
+          },
+          "forward_port": {
+            "title": "Forward Port",
+            "type": "integer"
+          },
+          "forward_scheme": {
+            "title": "Forward Scheme",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "domain_names",
+          "forward_scheme",
+          "forward_host",
+          "forward_port"
+        ],
+        "title": "ProxyHost",
+        "type": "object"
+      },
+      "ProxyIn": {
+        "properties": {
+          "access_list_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Access List Id"
+          },
+          "certificate_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Certificate Id"
+          },
+          "forward_mode": {
+            "default": "host_port",
+            "enum": [
+              "host_port",
+              "container_network"
+            ],
+            "title": "Forward Mode",
+            "type": "string"
+          },
+          "ssl_forced": {
+            "default": true,
+            "title": "Ssl Forced",
+            "type": "boolean"
+          },
+          "subdomain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subdomain"
+          },
+          "websockets": {
+            "default": true,
+            "title": "Websockets",
+            "type": "boolean"
+          }
+        },
+        "title": "ProxyIn",
+        "type": "object"
+      },
+      "ProxySettings": {
+        "description": "Nginx Proxy Manager settings for an app. `subdomain=None` disables registration.",
+        "properties": {
+          "access_list_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Access List Id"
+          },
+          "certificate_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Certificate Id"
+          },
+          "forward_mode": {
+            "default": "host_port",
+            "enum": [
+              "host_port",
+              "container_network"
+            ],
+            "title": "Forward Mode",
+            "type": "string"
+          },
+          "ssl_forced": {
+            "default": true,
+            "title": "Ssl Forced",
+            "type": "boolean"
+          },
+          "subdomain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subdomain"
+          },
+          "websockets": {
+            "default": true,
+            "title": "Websockets",
+            "type": "boolean"
+          }
+        },
+        "title": "ProxySettings",
+        "type": "object"
+      },
+      "SettingsModel": {
+        "additionalProperties": false,
+        "properties": {
+          "appdata_root": {
+            "minLength": 1,
+            "title": "Appdata Root",
+            "type": "string"
+          },
+          "base_domain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Domain"
+          },
+          "cold_interval_hours": {
+            "minimum": 1.0,
+            "title": "Cold Interval Hours",
+            "type": "integer"
+          },
+          "default_certificate_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Certificate Id"
+          },
+          "host_ip": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Host Ip"
+          },
+          "hot_interval_minutes": {
+            "minimum": 1.0,
+            "title": "Hot Interval Minutes",
+            "type": "integer"
+          },
+          "hot_window_hours": {
+            "minimum": 1.0,
+            "title": "Hot Window Hours",
+            "type": "integer"
+          },
+          "npm_credential_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Npm Credential Id"
+          },
+          "npm_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Npm Url"
+          },
+          "port_range_end": {
+            "maximum": 65535.0,
+            "minimum": 1.0,
+            "title": "Port Range End",
+            "type": "integer"
+          },
+          "port_range_start": {
+            "maximum": 65535.0,
+            "minimum": 1.0,
+            "title": "Port Range Start",
+            "type": "integer"
+          },
+          "reserved_ports": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Reserved Ports",
+            "type": "array"
+          },
+          "template_export_dir": {
+            "minLength": 1,
+            "title": "Template Export Dir",
+            "type": "string"
+          },
+          "template_export_include_secrets": {
+            "default": true,
+            "title": "Template Export Include Secrets",
+            "type": "boolean"
+          },
+          "unraid_managed_label": {
+            "minLength": 1,
+            "title": "Unraid Managed Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "port_range_start",
+          "port_range_end",
+          "appdata_root",
+          "hot_window_hours",
+          "hot_interval_minutes",
+          "cold_interval_hours",
+          "template_export_dir",
+          "unraid_managed_label"
+        ],
+        "title": "SettingsModel",
+        "type": "object"
+      },
+      "SourceIn": {
+        "properties": {
+          "credential_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credential Id"
+          },
+          "owner": {
+            "minLength": 1,
+            "title": "Owner",
+            "type": "string"
+          },
+          "ref": {
+            "default": "main",
+            "title": "Ref",
+            "type": "string"
+          },
+          "repo": {
+            "minLength": 1,
+            "title": "Repo",
+            "type": "string"
+          },
+          "template_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Path"
+          }
+        },
+        "required": [
+          "owner",
+          "repo"
+        ],
+        "title": "SourceIn",
+        "type": "object"
+      },
+      "SourceMatch": {
+        "properties": {
+          "confidence": {
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "title": "Confidence",
+            "type": "string"
+          },
+          "owner": {
+            "title": "Owner",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "repo": {
+            "title": "Repo",
+            "type": "string"
+          },
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Id"
+          },
+          "template_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Path"
+          }
+        },
+        "required": [
+          "source_id",
+          "owner",
+          "repo",
+          "template_path",
+          "confidence",
+          "reason"
+        ],
+        "title": "SourceMatch",
+        "type": "object"
+      },
+      "SourceOut": {
+        "properties": {
+          "credential_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credential Id"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "owner": {
+            "title": "Owner",
+            "type": "string"
+          },
+          "ref": {
+            "title": "Ref",
+            "type": "string"
+          },
+          "repo": {
+            "title": "Repo",
+            "type": "string"
+          },
+          "template_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Path"
+          }
+        },
+        "required": [
+          "id",
+          "owner",
+          "repo",
+          "ref",
+          "template_path",
+          "credential_id"
+        ],
+        "title": "SourceOut",
+        "type": "object"
+      },
+      "TemplateConfig": {
+        "description": "One `<Config>` entry of an Unraid template.",
+        "properties": {
+          "default": {
+            "title": "Default",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "display": {
+            "default": "always",
+            "title": "Display",
+            "type": "string"
+          },
+          "mask": {
+            "default": false,
+            "title": "Mask",
+            "type": "boolean"
+          },
+          "mode": {
+            "default": "",
+            "title": "Mode",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "required": {
+            "default": false,
+            "title": "Required",
+            "type": "boolean"
+          },
+          "target": {
+            "title": "Target",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "Port",
+              "Path",
+              "Variable",
+              "Label",
+              "Device"
+            ],
+            "title": "Type",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "target",
+          "default",
+          "value",
+          "type"
+        ],
+        "title": "TemplateConfig",
+        "type": "object"
+      },
+      "TemplateConfigOut": {
+        "properties": {
+          "default": {
+            "title": "Default",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "display": {
+            "title": "Display",
+            "type": "string"
+          },
+          "mask": {
+            "title": "Mask",
+            "type": "boolean"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "required": {
+            "title": "Required",
+            "type": "boolean"
+          },
+          "target": {
+            "title": "Target",
+            "type": "string"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "target",
+          "default",
+          "value",
+          "type",
+          "mode",
+          "description",
+          "display",
+          "required",
+          "mask"
+        ],
+        "title": "TemplateConfigOut",
+        "type": "object"
+      },
+      "TemplatePreviewOut": {
+        "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "commit_sha": {
+            "title": "Commit Sha",
+            "type": "string"
+          },
+          "configs": {
+            "items": {
+              "$ref": "#/components/schemas/TemplateConfigOut"
+            },
+            "title": "Configs",
+            "type": "array"
+          },
+          "extra_params": {
+            "title": "Extra Params",
+            "type": "string"
+          },
+          "icon": {
+            "title": "Icon",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "network": {
+            "title": "Network",
+            "type": "string"
+          },
+          "overview": {
+            "title": "Overview",
+            "type": "string"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "privileged": {
+            "title": "Privileged",
+            "type": "boolean"
+          },
+          "project": {
+            "title": "Project",
+            "type": "string"
+          },
+          "repository": {
+            "title": "Repository",
+            "type": "string"
+          },
+          "support": {
+            "title": "Support",
+            "type": "string"
+          },
+          "webui": {
+            "title": "Webui",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "commit_sha",
+          "name",
+          "repository",
+          "network",
+          "privileged",
+          "webui",
+          "overview",
+          "category",
+          "icon",
+          "support",
+          "project",
+          "extra_params",
+          "configs"
+        ],
+        "title": "TemplatePreviewOut",
+        "type": "object"
+      },
+      "UnraidTemplate": {
+        "description": "A parsed Unraid container template.",
+        "properties": {
+          "category": {
+            "default": "",
+            "title": "Category",
+            "type": "string"
+          },
+          "configs": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/TemplateConfig"
+            },
+            "title": "Configs",
+            "type": "array"
+          },
+          "cpuset": {
+            "default": "",
+            "title": "Cpuset",
+            "type": "string"
+          },
+          "extra_params": {
+            "default": "",
+            "title": "Extra Params",
+            "type": "string"
+          },
+          "icon": {
+            "default": "",
+            "title": "Icon",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "network": {
+            "default": "bridge",
+            "title": "Network",
+            "type": "string"
+          },
+          "overview": {
+            "default": "",
+            "title": "Overview",
+            "type": "string"
+          },
+          "post_args": {
+            "default": "",
+            "title": "Post Args",
+            "type": "string"
+          },
+          "privileged": {
+            "default": false,
+            "title": "Privileged",
+            "type": "boolean"
+          },
+          "project": {
+            "default": "",
+            "title": "Project",
+            "type": "string"
+          },
+          "registry": {
+            "default": "",
+            "title": "Registry",
+            "type": "string"
+          },
+          "repository": {
+            "title": "Repository",
+            "type": "string"
+          },
+          "shell": {
+            "default": "sh",
+            "title": "Shell",
+            "type": "string"
+          },
+          "support": {
+            "default": "",
+            "title": "Support",
+            "type": "string"
+          },
+          "unknown_elements": {
+            "default": [],
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Unknown Elements",
+            "type": "array"
+          },
+          "webui": {
+            "default": "",
+            "title": "Webui",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "repository"
+        ],
+        "title": "UnraidTemplate",
+        "type": "object"
+      },
+      "UpdateCheckOut": {
+        "properties": {
+          "app_id": {
+            "title": "App Id",
+            "type": "integer"
+          },
+          "checked_at": {
+            "format": "date-time",
+            "title": "Checked At",
+            "type": "string"
+          },
+          "image_changed": {
+            "title": "Image Changed",
+            "type": "boolean"
+          },
+          "needs_attention": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Needs Attention"
+          },
+          "new_image_digest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New Image Digest"
+          },
+          "new_template_commit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New Template Commit"
+          },
+          "template_changed": {
+            "title": "Template Changed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "app_id",
+          "template_changed",
+          "new_template_commit",
+          "image_changed",
+          "new_image_digest",
+          "needs_attention",
+          "checked_at"
+        ],
+        "title": "UpdateCheckOut",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Unraid App Manager",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/apps": {
+      "get": {
+        "description": "All apps.",
+        "operationId": "list_apps_api_apps_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AppOut"
+                  },
+                  "title": "Response List Apps Api Apps Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Apps"
+      },
+      "post": {
+        "description": "Add an app. With `install` (default) the install runs in the background and this returns 202.",
+        "operationId": "create_app_api_apps_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create App"
+      }
+    },
+    "/api/apps/{app_id}": {
+      "delete": {
+        "description": "Uninstall an app, optionally deleting its appdata directory.",
+        "operationId": "delete_app_api_apps__app_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "app_id",
+            "required": true,
+            "schema": {
+              "title": "App Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "delete_appdata",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Delete Appdata",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete App"
+      },
+      "get": {
+        "description": "One app.",
+        "operationId": "get_app_api_apps__app_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "app_id",
+            "required": true,
+            "schema": {
+              "title": "App Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get App"
+      },
+      "patch": {
+        "description": "Edit an app. Flag changes apply at once (200); changes to overrides, proxy or image tag recreate\nthe container in the background (202).",
+        "operationId": "patch_app_api_apps__app_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "app_id",
+            "required": true,
+            "schema": {
+              "title": "App Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/AppOut"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AcceptedOut"
+                    }
+                  ],
+                  "title": "Response Patch App Api Apps  App Id  Patch"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Patch App"
+      }
+    },
+    "/api/apps/{app_id}/check": {
+      "post": {
+        "description": "Run an update check now.",
+        "operationId": "check_app_api_apps__app_id__check_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "app_id",
+            "required": true,
+            "schema": {
+              "title": "App Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateCheckOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Check App"
+      }
+    },
+    "/api/apps/{app_id}/events": {
+      "get": {
+        "description": "Recent events of one app.",
+        "operationId": "app_events_api_apps__app_id__events_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "app_id",
+            "required": true,
+            "schema": {
+              "title": "App Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response App Events Api Apps  App Id  Events Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "App Events"
+      }
+    },
+    "/api/apps/{app_id}/install": {
+      "post": {
+        "description": "Install in the background.",
+        "operationId": "install_app_api_apps__app_id__install_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "app_id",
+            "required": true,
+            "schema": {
+              "title": "App Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Install App"
+      }
+    },
+    "/api/apps/{app_id}/logs": {
+      "get": {
+        "description": "Last `tail` log lines of the app's container, with token-like strings masked.",
+        "operationId": "app_logs_api_apps__app_id__logs_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "app_id",
+            "required": true,
+            "schema": {
+              "title": "App Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tail",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "maximum": 5000,
+              "minimum": 1,
+              "title": "Tail",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "App Logs"
+      }
+    },
+    "/api/apps/{app_id}/restart": {
+      "post": {
+        "description": "Restart the container.",
+        "operationId": "restart_app_api_apps__app_id__restart_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "app_id",
+            "required": true,
+            "schema": {
+              "title": "App Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Restart App"
+      }
+    },
+    "/api/apps/{app_id}/start": {
+      "post": {
+        "description": "Start the container.",
+        "operationId": "start_app_api_apps__app_id__start_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "app_id",
+            "required": true,
+            "schema": {
+              "title": "App Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start App"
+      }
+    },
+    "/api/apps/{app_id}/stop": {
+      "post": {
+        "description": "Stop the container.",
+        "operationId": "stop_app_api_apps__app_id__stop_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "app_id",
+            "required": true,
+            "schema": {
+              "title": "App Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Stop App"
+      }
+    },
+    "/api/apps/{app_id}/update": {
+      "post": {
+        "description": "Update in the background (template, image, or both).",
+        "operationId": "update_app_api_apps__app_id__update_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "app_id",
+            "required": true,
+            "schema": {
+              "title": "App Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/AppUpdateIn"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update App"
+      }
+    },
+    "/api/auth/status": {
+      "get": {
+        "description": "Whether first-run setup is needed and whether the caller is signed in.",
+        "operationId": "auth_status_api_auth_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthStatusOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Auth Status"
+      }
+    },
+    "/api/credentials": {
+      "get": {
+        "description": "All credentials, without secrets.",
+        "operationId": "list_credentials_api_credentials_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CredentialOut"
+                  },
+                  "title": "Response List Credentials Api Credentials Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Credentials"
+      },
+      "post": {
+        "description": "Store a credential; the secret is write-only.",
+        "operationId": "create_credential_api_credentials_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CredentialOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Credential"
+      }
+    },
+    "/api/credentials/{credential_id}": {
+      "delete": {
+        "description": "Delete a credential.",
+        "operationId": "delete_credential_api_credentials__credential_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "credential_id",
+            "required": true,
+            "schema": {
+              "title": "Credential Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Credential"
+      }
+    },
+    "/api/credentials/{credential_id}/test": {
+      "post": {
+        "description": "Check that a stored credential works against its service where that can be tested.",
+        "operationId": "test_credential_api_credentials__credential_id__test_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "credential_id",
+            "required": true,
+            "schema": {
+              "title": "Credential Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CredentialTestOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Test Credential"
+      }
+    },
+    "/api/events": {
+      "get": {
+        "description": "Recent events across all apps.",
+        "operationId": "all_events_api_events_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response All Events Api Events Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "All Events"
+      }
+    },
+    "/api/health": {
+      "get": {
+        "description": "Liveness probe.",
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health"
+      }
+    },
+    "/api/imports/apply": {
+      "post": {
+        "description": "Apply a plan returned by /imports/plan. The importer creates the app row, so this awaits it.",
+        "operationId": "import_apply_api_imports_apply_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportPlan"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Import Apply"
+      }
+    },
+    "/api/imports/candidates": {
+      "get": {
+        "description": "Running containers that could be imported.",
+        "operationId": "import_candidates_api_imports_candidates_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ImportCandidate"
+                  },
+                  "title": "Response Import Candidates Api Imports Candidates Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Import Candidates"
+      }
+    },
+    "/api/imports/plan": {
+      "post": {
+        "description": "Build an import plan for review.",
+        "operationId": "import_plan_api_imports_plan_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportPlanRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportPlan"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Import Plan"
+      }
+    },
+    "/api/login": {
+      "post": {
+        "description": "Check the password and set the signed session cookie.",
+        "operationId": "login_api_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Login"
+      }
+    },
+    "/api/logout": {
+      "post": {
+        "description": "Clear the session cookie.",
+        "operationId": "logout_api_logout_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Logout"
+      }
+    },
+    "/api/npm/access-lists": {
+      "get": {
+        "description": "Access lists known to Nginx Proxy Manager.",
+        "operationId": "npm_access_lists_api_npm_access_lists_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/NamedIdOut"
+                  },
+                  "title": "Response Npm Access Lists Api Npm Access Lists Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Npm Access Lists"
+      }
+    },
+    "/api/npm/certificates": {
+      "get": {
+        "description": "Certificates known to Nginx Proxy Manager.",
+        "operationId": "npm_certificates_api_npm_certificates_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/NamedIdOut"
+                  },
+                  "title": "Response Npm Certificates Api Npm Certificates Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Npm Certificates"
+      }
+    },
+    "/api/ports": {
+      "get": {
+        "description": "Port allocations plus every host port currently in use.",
+        "operationId": "get_ports_api_ports_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Ports"
+      }
+    },
+    "/api/settings": {
+      "get": {
+        "description": "Current settings.",
+        "operationId": "get_settings_api_settings_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsModel"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Settings"
+      },
+      "put": {
+        "description": "Replace the settings.",
+        "operationId": "put_settings_api_settings_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettingsModel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingsModel"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Settings"
+      }
+    },
+    "/api/setup": {
+      "post": {
+        "description": "First-run only: set the admin password and sign in.",
+        "operationId": "setup_api_setup_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Setup"
+      }
+    },
+    "/api/sources": {
+      "get": {
+        "description": "All template sources.",
+        "operationId": "list_sources_api_sources_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SourceOut"
+                  },
+                  "title": "Response List Sources Api Sources Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Sources"
+      },
+      "post": {
+        "description": "Add a GitHub repo as a template source.",
+        "operationId": "create_source_api_sources_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SourceIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Source"
+      }
+    },
+    "/api/sources/{source_id}": {
+      "delete": {
+        "description": "Delete a source (409 while apps still use it).",
+        "operationId": "delete_source_api_sources__source_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source_id",
+            "required": true,
+            "schema": {
+              "title": "Source Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Source"
+      }
+    },
+    "/api/sources/{source_id}/templates": {
+      "get": {
+        "description": "Templates found in the source repo.",
+        "operationId": "discover_templates_api_sources__source_id__templates_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source_id",
+            "required": true,
+            "schema": {
+              "title": "Source Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DiscoveredTemplateOut"
+                  },
+                  "title": "Response Discover Templates Api Sources  Source Id  Templates Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Discover Templates"
+      }
+    },
+    "/api/sources/{source_id}/templates/preview": {
+      "get": {
+        "description": "Parsed template and config list for the add-app form.",
+        "operationId": "preview_template_api_sources__source_id__templates_preview_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source_id",
+            "required": true,
+            "schema": {
+              "title": "Source Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "path",
+            "required": true,
+            "schema": {
+              "minLength": 1,
+              "title": "Path",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplatePreviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Template"
+      }
+    },
+    "/api/templates/export/apply": {
+      "post": {
+        "description": "Write previously planned templates (409 if a file changed since the plan).",
+        "operationId": "export_apply_api_templates_export_apply_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportApplyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportApplyOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Apply"
+      }
+    },
+    "/api/templates/export/plan": {
+      "post": {
+        "description": "Preview the flash templates that would be written (diff included).",
+        "operationId": "export_plan_api_templates_export_plan_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ExportPlanRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ExportPlanModel"
+                  },
+                  "title": "Response Export Plan Api Templates Export Plan Post",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Plan"
+      }
+    }
+  }
+}
