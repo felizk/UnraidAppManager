@@ -37,6 +37,7 @@ the template rules, the publish workflow, `uam-lint`, and a starter kit for peop
 | `UAM_SECRET_KEY` | generated into `/data/secret.key` | Fernet key for stored secrets; `UAM_SECRET_KEY_OLD` holds comma-separated previous keys for rotation |
 | `UAM_API_TOKEN` | – | enables `Authorization: Bearer <token>` for scripting the REST API |
 | `UAM_PROC_ROOT` | `/host/proc` | where the host's `/proc` is mounted |
+| `UAM_GITHUB_API_URL` | `https://api.github.com` | GitHub API base URL (GitHub Enterprise, or a stub in tests) |
 | `UAM_LOG_LEVEL` | `INFO` | log level (JSON logs on stdout) |
 
 ## Credentials

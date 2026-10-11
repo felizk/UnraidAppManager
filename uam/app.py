@@ -38,6 +38,7 @@ class AppConfig:
     api_token: str | None = None
     proc_root: str = "/host/proc"
     start_scheduler: bool = True
+    github_api_url: str = "https://api.github.com"
 
     @property
     def database_url(self) -> str:
@@ -46,7 +47,7 @@ class AppConfig:
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> AppConfig:
-        """Read the `UAM_*` variables (DATA_DIR, DB_URL, FAKES, API_TOKEN, PROC_ROOT, SCHEDULER)."""
+        """Read the `UAM_*` environment variables (see README, "Environment")."""
         env = os.environ if env is None else env
         return cls(
             data_dir=Path(env.get("UAM_DATA_DIR", "/data")),
@@ -55,6 +56,7 @@ class AppConfig:
             api_token=env.get("UAM_API_TOKEN") or None,
             proc_root=env.get("UAM_PROC_ROOT", "/host/proc"),
             start_scheduler=env.get("UAM_SCHEDULER", "1") != "0",
+            github_api_url=env.get("UAM_GITHUB_API_URL") or "https://api.github.com",
         )
 
 
@@ -117,7 +119,7 @@ async def build_runtime(config: AppConfig) -> Runtime:
     events = SqlEventLog(sf)
     vault = FernetVault(sf, fernet)
     http = httpx.AsyncClient(timeout=30.0, follow_redirects=True)
-    github = HttpGitHubClient(SqlHttpCache(sf), client=http)
+    github = HttpGitHubClient(SqlHttpCache(sf), base_url=config.github_api_url, client=http)
     registry = HttpRegistryClient(httpx.AsyncClient(timeout=30.0, follow_redirects=True))
     docker = SdkDockerEngine(proc_root=config.proc_root)
     proc_net = Path(config.proc_root) / "net"
