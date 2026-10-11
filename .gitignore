@@ -8,3 +8,4 @@ __pycache__/
 .dev-data/
 dist/
 build/
+.claude/worktrees/
