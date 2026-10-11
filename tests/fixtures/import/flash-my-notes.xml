@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>notes</Name>
+  <Repository>ghcr.io/felizk/notes:1.2</Repository>
+  <Registry/>
+  <Network>bridge</Network>
+  <Privileged>false</Privileged>
+  <Shell>sh</Shell>
+  <Support>https://forums.unraid.net/topic/1</Support>
+  <Project>https://github.com/felizk/notes</Project>
+  <Overview/>
+  <Category/>
+  <WebUI>http://[IP]:[PORT:3000]/</WebUI>
+  <Icon/>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <Config Name="Web UI" Target="3000" Default="3000" Mode="tcp" Description="" Type="Port" Display="always" Required="true" Mask="false">8080</Config>
+  <Config Name="Data" Target="/data" Default="/mnt/user/appdata/notes" Mode="rw" Description="" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/notes</Config>
+  <Config Name="Debug" Target="DEBUG" Default="" Mode="" Description="" Type="Variable" Display="always" Required="false" Mask="false">1</Config>
+  <Config Name="Token" Target="API_TOKEN" Default="" Mode="" Description="" Type="Variable" Display="always" Required="false" Mask="true">hunter2</Config>
+</Container>
