@@ -26,7 +26,7 @@ jobs:
         with:
           images: ghcr.io/felizk/unraid-app-manager
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=sha,prefix=sha-
             type=semver,pattern=v{{version}}
             type=semver,pattern={{version}}
