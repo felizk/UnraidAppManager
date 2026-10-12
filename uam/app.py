@@ -260,13 +260,11 @@ def _assemble(config: AppConfig, **c: object) -> Runtime:
 
 
 def _mount_ui(app: FastAPI) -> None:
-    """Mount the HTML UI when it is available (T13)."""
-    try:
-        from uam.web.ui import create_ui_router  # type: ignore[attr-defined]
-    except ImportError:
-        log.warning("web UI not available; serving the API only")
-        return
+    """Mount the HTML UI and its static files."""
+    from uam.web.ui import create_ui_router, mount_static
+
     app.include_router(create_ui_router())
+    mount_static(app)
 
 
 def create_app(

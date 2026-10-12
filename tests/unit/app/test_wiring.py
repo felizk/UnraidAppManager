@@ -78,3 +78,12 @@ async def test_proxy_switch_follows_settings():
         await settings.save(s)
         assert await proxy.list_proxy_hosts() == []
     assert respx.calls.call_count == 4  # token + list on each server
+
+
+def test_ui_is_mounted(tmp_path):
+    cfg = AppConfig(data_dir=tmp_path, fakes=True, start_scheduler=False)
+    with TestClient(create_app(cfg)) as client:
+        page = client.get("/", follow_redirects=False)
+        assert page.status_code in (302, 303, 307) and "/setup" in page.headers["location"]
+        assert client.get("/setup").status_code == 200
+        assert client.get("/static/vendor/htmx-2.0.4.min.js").status_code == 200
