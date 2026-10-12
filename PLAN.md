@@ -181,8 +181,8 @@ parallel right after T00**. In practice, batches of 4–6 are easier to review:
 ### Progress
 - [x] T00: scaffold, contracts, DB, fakes (`make check` green)
 - [x] Batch A: T01–T07
-- [ ] Batch B: T08–T12, T16, T17
-- [ ] Batch C: T13, then T14, then T15
+- [x] Batch B: T08–T12, T16, T17
+- [ ] Batch C: T13 ✓, T14 ✓, T15 (integration tests) pending
 
 ## 6. How to run this plan with subagents
 
