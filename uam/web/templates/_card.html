@@ -1,0 +1,23 @@
+{% from "_macros.html" import state_badge, icon, actions %}
+<article class="card" id="card-{{ v.app.id }}"
+  {%- if v.polling %} hx-get="/fragments/apps/{{ v.app.id }}/card" hx-trigger="every 2s" hx-swap="outerHTML"{% endif %}>
+  <header class="card-head">
+    {{ icon(v) }}
+    <div>
+      <h3><a href="/apps/{{ v.app.id }}">{{ v.app.name }}</a></h3>
+      {{ state_badge(v.app.state) }}
+      {% if v.polling %}<span class="badge busy" aria-busy="true">working</span>{% endif %}
+    </div>
+  </header>
+  <div class="badges">
+    {% if v.update_template %}<span class="badge update">template update</span>{% endif %}
+    {% if v.update_image %}<span class="badge update">image update</span>{% endif %}
+  </div>
+  {% if v.app.needs_attention %}<p class="warn">&#9888; {{ v.app.needs_attention }}</p>{% endif %}
+  {% if v.app.last_error and v.app.state.value in ('failed', 'failed_update') %}<p class="warn">{{ v.app.last_error }}</p>{% endif %}
+  <p class="meta">
+    {% if v.webui_url %}<a href="{{ v.webui_url }}" target="_blank" rel="noopener">WebUI &#8599;</a> &middot; {% endif %}
+    checked {{ v.app.last_checked_at|ago }}
+  </p>
+  {{ actions(v, 'card') }}
+</article>

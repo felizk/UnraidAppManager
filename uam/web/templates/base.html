@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="htmx-config" content='{"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"[45]..","swap":true,"error":true}]}'>
+  <title>{% block title %}Unraid App Manager{% endblock %}</title>
+  <link rel="stylesheet" href="/static/vendor/pico-2.0.6.min.css">
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/vendor/htmx-2.0.4.min.js" defer></script>
+</head>
+<body hx-headers='{"X-Requested-With": "uam"}'>
+{% block nav %}
+<header class="container">
+  <nav>
+    <ul><li><a href="/" class="brand"><strong>UAM</strong></a></li></ul>
+    <ul class="mainnav">
+      {% for href, key, label in [("/", "dashboard", "Apps"), ("/sources", "sources", "Sources"), ("/import", "import", "Import"), ("/export", "export", "Export"), ("/credentials", "credentials", "Credentials"), ("/settings", "settings", "Settings")] %}
+      <li><a href="{{ href }}"{% if active == key %} aria-current="page"{% endif %}>{{ label }}</a></li>
+      {% endfor %}
+      <li><a href="#" role="button" class="secondary outline sm" hx-post="/logout">Log out</a></li>
+    </ul>
+  </nav>
+</header>
+{% endblock %}
+<div id="flash" class="container" role="status" aria-live="polite"></div>
+<main class="container" id="main">
+{% block content %}{% endblock %}
+</main>
+</body>
+</html>

@@ -1,0 +1,16 @@
+<section>
+  {% for p in plans %}
+  <article>
+    <header><code>{{ p.path }}</code> {% if not p.changed %}<span class="badge">unchanged</span>{% elif p.old_xml is none %}<span class="badge update">new file</span>{% else %}<span class="badge update">changed</span>{% endif %}</header>
+    {% if p.changed %}<pre class="diff">{{ p.diff|diff }}</pre>{% else %}<p>Nothing to write.</p>{% endif %}
+  </article>
+  {% endfor %}
+  {% if any_changed %}
+  <form hx-post="/export/apply" hx-target="#preview" hx-swap="innerHTML">
+    <input type="hidden" name="digest" value="{{ digest }}">
+    {% for i in app_ids %}<input type="hidden" name="app_ids" value="{{ i }}">{% endfor %}
+    <label><input type="checkbox" name="include_secrets" value="1" {% if include_secrets %}checked{% endif %}> Include secrets (masked values)</label>
+    <button type="submit" hx-disabled-elt="this">Write to flash</button>
+  </form>
+  {% endif %}
+</section>

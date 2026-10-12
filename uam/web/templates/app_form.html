@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit ' ~ app.name if app else 'Add app' }} - UAM{% endblock %}
+{% block content %}
+<h1>{% if app %}Edit {{ app.name }}{% else %}Add {{ tpl.name }}{% endif %}</h1>
+{% if tpl.overview %}<p>{{ tpl.overview }}</p>{% endif %}
+<p class="meta">Image <code>{{ tpl.repository }}</code></p>
+{% include "_app_form.html" %}
+{% endblock %}

@@ -1,0 +1,5 @@
+<article class="flash ok" role="status">
+  {% if written %}Wrote {{ written|length }} template(s):
+  <ul>{% for w in written %}<li><code>{{ w }}</code></li>{% endfor %}</ul>
+  {% else %}Nothing needed writing.{% endif %}
+</article>

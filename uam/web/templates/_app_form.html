@@ -1,0 +1,94 @@
+{% macro cfg_field(f) %}
+<label>{{ f.config.name }}{% if f.config.required %} <span class="req">*</span>{% endif %}
+  <input name="{{ f.name }}" type="{{ 'password' if f.config.mask else 'text' }}" value="{{ f.value }}"
+    placeholder="{{ f.placeholder or (('unchanged' if f.has_existing else 'not set') if f.config.mask else '') }}"
+    {% if f.config.mask %}autocomplete="new-password"{% endif %}
+    {% if f.config.type == 'Port' %}inputmode="numeric"{% endif %}
+    {% if f.error %}aria-invalid="true"{% endif %}>
+  {% if f.error %}<small class="field-error">{{ f.error }}</small>{% endif %}
+  <small>{{ f.config.type }} <code>{{ f.config.target }}{% if f.config.type == 'Port' %}/{{ f.config.mode or 'tcp' }}{% endif %}</code>
+    {% if f.config.description %}&middot; {{ f.config.description }}{% endif %}</small>
+</label>
+{% endmacro %}
+
+<form id="appform" hx-post="{{ action }}" hx-target="#appform" hx-swap="outerHTML">
+  {% if state.errors.get('_general') %}<article class="flash error" role="alert">{{ state.errors.get('_general') }}</article>{% endif %}
+  {% if state.errors %}<p class="field-error">Please fix the highlighted fields.</p>{% endif %}
+  <input type="hidden" name="source_id" value="{{ source_id }}">
+  <input type="hidden" name="template_path" value="{{ template_path }}">
+
+  <fieldset>
+    <label>Container name
+      {% if app %}<input type="text" value="{{ app.name }}" disabled>
+      {% else %}<input type="text" name="name" value="{{ state.name }}" {% if state.errors.get('name') %}aria-invalid="true"{% endif %}>{% endif %}
+      {% if state.errors.get('name') %}<small class="field-error">{{ state.errors.get('name') }}</small>{% endif %}
+    </label>
+    <label><input type="checkbox" name="auto_ports" value="1" {% if state.auto_ports %}checked{% endif %}>
+      Allocate host ports automatically (from the configured range)</label>
+  </fieldset>
+
+  {% for title, normal, advanced in groups %}
+  <fieldset>
+    <legend>{{ title }}</legend>
+    {% for f in normal %}{{ cfg_field(f) }}{% endfor %}
+    {% if advanced %}
+    <details {% if advanced|selectattr('error')|list %}open{% endif %}>
+      <summary>Advanced {{ title|lower }}</summary>
+      {% for f in advanced %}{{ cfg_field(f) }}{% endfor %}
+    </details>
+    {% endif %}
+  </fieldset>
+  {% endfor %}
+
+  <fieldset>
+    <legend>Proxy (Nginx Proxy Manager)</legend>
+    {% if proxy_note %}<small>{{ proxy_note }}</small>{% endif %}
+    <label>Subdomain
+      <input type="text" name="subdomain" value="{{ state.subdomain }}" autocomplete="off" placeholder="leave empty for no proxy host"
+        hx-get="/fragments/subdomain-preview" hx-trigger="input changed delay:200ms" hx-target="#sub-preview" hx-swap="innerHTML"
+        {% if state.errors.get('subdomain') %}aria-invalid="true"{% endif %}>
+      {% if state.errors.get('subdomain') %}<small class="field-error">{{ state.errors.get('subdomain') }}</small>{% endif %}
+    </label>
+    <p>Address: <span id="sub-preview">{% with subdomain=state.subdomain %}{% include "_subdomain_preview.html" %}{% endwith %}</span></p>
+    <label>Forward mode
+      <select name="forward_mode">
+        <option value="host_port" {% if state.forward_mode == 'host_port' %}selected{% endif %}>Host port</option>
+        <option value="container_network" {% if state.forward_mode == 'container_network' %}selected{% endif %}>Container network</option>
+      </select>
+    </label>
+    <label>SSL certificate
+      {% if certs %}
+      <select name="certificate_id">
+        <option value="">(none)</option>
+        {% for cid, cname in certs %}<option value="{{ cid }}" {% if state.certificate_id == cid|string %}selected{% endif %}>{{ cname }}</option>{% endfor %}
+      </select>
+      {% else %}<input type="text" name="certificate_id" value="{{ state.certificate_id }}" inputmode="numeric" placeholder="certificate id">{% endif %}
+      {% if state.errors.get('certificate_id') %}<small class="field-error">{{ state.errors.get('certificate_id') }}</small>{% endif %}
+    </label>
+    <label>Access list
+      {% if access_lists %}
+      <select name="access_list_id">
+        <option value="">(none)</option>
+        {% for aid, aname in access_lists %}<option value="{{ aid }}" {% if state.access_list_id == aid|string %}selected{% endif %}>{{ aname }}</option>{% endfor %}
+      </select>
+      {% else %}<input type="text" name="access_list_id" value="{{ state.access_list_id }}" inputmode="numeric" placeholder="access list id">{% endif %}
+      {% if state.errors.get('access_list_id') %}<small class="field-error">{{ state.errors.get('access_list_id') }}</small>{% endif %}
+    </label>
+    <label><input type="checkbox" name="ssl_forced" value="1" {% if state.ssl_forced %}checked{% endif %}> Force SSL</label>
+    <label><input type="checkbox" name="websockets" value="1" {% if state.websockets %}checked{% endif %}> Websockets support</label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Updates</legend>
+    <label><input type="checkbox" name="auto_update_image" value="1" {% if state.auto_update_image %}checked{% endif %}> Update automatically when a new image is available</label>
+    <label><input type="checkbox" name="auto_update_template" value="1" {% if state.auto_update_template %}checked{% endif %}> Apply template changes automatically</label>
+    <label>Image tag override
+      <input type="text" name="image_tag_override" value="{{ state.image_tag_override }}" placeholder="use the template's tag">
+    </label>
+  </fieldset>
+
+  {% if not app %}
+  <label><input type="checkbox" name="install" value="1" {% if state.install %}checked{% endif %}> Install now</label>
+  {% endif %}
+  <button type="submit" hx-disabled-elt="this">{% if app %}Save{% else %}Add app{% endif %}</button>
+</form>

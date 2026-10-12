@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Import - UAM{% endblock %}
+{% block content %}
+<h1>Import existing containers</h1>
+<p>Adopt containers that are already running so UAM can update them. Nothing changes until you confirm the review.</p>
+
+{% if rows %}
+<form hx-post="/import/bulk" hx-target="#wizard" hx-swap="innerHTML">
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th></th><th>Container</th><th>Image</th><th>Unraid</th><th>Best match</th><th>Subdomain</th><th>Blockers</th><th></th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+    <tr>
+      <td>{% if r.eligible %}<input type="checkbox" name="names" value="{{ r.c.container_name }}" aria-label="Select {{ r.c.container_name }}" {% if r.selected %}checked{% endif %}>{% endif %}</td>
+      <td>{{ r.c.container_name }}</td>
+      <td><code>{{ r.c.image }}</code></td>
+      <td>{% if r.c.unraid_managed %}<span class="badge">{{ r.c.unraid_managed }}</span>{% else %}-{% endif %}</td>
+      <td>{% if r.best %}{{ r.best.owner }}/{{ r.best.repo }} <span class="badge conf-{{ r.best.confidence }}">{{ r.best.confidence }}</span>{% else %}<em>none</em>{% endif %}</td>
+      <td>{{ r.subdomain or '-' }}</td>
+      <td>{% if r.c.blockers %}<ul class="blockers">{% for b in r.c.blockers %}<li>{{ b }}</li>{% endfor %}</ul>{% else %}-{% endif %}</td>
+      <td>
+        <button type="button" class="sm" {% if r.c.blockers %}disabled{% endif %}
+          hx-get="/import/wizard/{{ r.c.container_name|urlencode }}" hx-target="#wizard" hx-swap="innerHTML">Import&hellip;</button>
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p>
+    <a href="/import?select=high" role="button" class="sm outline">Select all high-confidence matches</a>
+    <button type="submit" class="sm" hx-disabled-elt="this">Import selected with defaults</button>
+  </p>
+</form>
+{% else %}
+<p>No importable containers were found.</p>
+{% endif %}
+
+<div id="wizard"></div>
+{% endblock %}

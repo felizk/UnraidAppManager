@@ -1,0 +1,33 @@
+{% macro state_badge(state) -%}
+<span class="badge state-{{ state.value }}">{{ state.value|replace('_', ' ') }}</span>
+{%- endmacro %}
+
+{% macro icon(v) -%}
+{% if v.icon %}<img class="app-icon" src="{{ v.icon }}" alt="" loading="lazy" width="40" height="40">
+{% else %}<span class="app-icon placeholder" aria-hidden="true">{{ v.app.name[:1]|upper }}</span>{% endif %}
+{%- endmacro %}
+
+{% macro actions(v, view) -%}
+{% set q = '?view=detail' if view == 'detail' else '' %}
+{% set target = '#summary' if view == 'detail' else '#card-' ~ v.app.id %}
+{% set s = v.app.state.value %}
+<div class="actions">
+  {% if s in ('not_installed', 'failed') %}
+  <button class="sm" hx-post="/apps/{{ v.app.id }}/install{{ q }}" hx-target="{{ target }}" hx-swap="outerHTML" hx-disabled-elt="this">Install</button>
+  {% endif %}
+  {% if s in ('stopped', 'failed_update') %}
+  <button class="sm secondary" hx-post="/apps/{{ v.app.id }}/start{{ q }}" hx-target="{{ target }}" hx-swap="outerHTML" hx-disabled-elt="this">Start</button>
+  {% endif %}
+  {% if s in ('running', 'failed_update') %}
+  <button class="sm secondary" hx-post="/apps/{{ v.app.id }}/stop{{ q }}" hx-target="{{ target }}" hx-swap="outerHTML" hx-disabled-elt="this">Stop</button>
+  <button class="sm secondary" hx-post="/apps/{{ v.app.id }}/restart{{ q }}" hx-target="{{ target }}" hx-swap="outerHTML" hx-disabled-elt="this">Restart</button>
+  {% endif %}
+  {% if v.update_template or v.update_image %}
+  <button class="sm" hx-post="/apps/{{ v.app.id }}/update{{ q }}" hx-target="{{ target }}" hx-swap="outerHTML" hx-disabled-elt="this"
+          hx-vals='{"apply_template": "{{ '1' if v.update_template else '0' }}", "apply_image": "{{ '1' if v.update_image else '0' }}"}'>Update</button>
+  {% endif %}
+  {% if v.installed %}
+  <button class="sm outline" hx-post="/apps/{{ v.app.id }}/check{{ q }}" hx-target="{{ target }}" hx-swap="outerHTML" hx-disabled-elt="this">Check now</button>
+  {% endif %}
+</div>
+{%- endmacro %}
