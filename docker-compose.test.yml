@@ -1,0 +1,30 @@
+# Services the integration suite (tests/integration) needs. The tests start and remove these
+# containers themselves through the Docker SDK, with random free host ports, so you normally do not
+# run this file. It documents the setup, and `docker compose -f docker-compose.test.yml up -d` gives
+# you the same stack to poke at by hand.
+#
+#   registry  stands in for GHCR (the tests push tiny app images to localhost:5000)
+#   npm       a real Nginx Proxy Manager; first login admin@example.com / changeme (30-90 s to boot)
+#
+# GitHub is not here: the tests serve a small FastAPI stub (tests/integration/stub_github.py) in-process.
+# Image overrides for the tests: UAM_TEST_REGISTRY_IMAGE, UAM_TEST_NPM_IMAGE, UAM_TEST_BASE_IMAGE.
+services:
+  registry:
+    image: ${UAM_TEST_REGISTRY_IMAGE:-registry:2}
+    container_name: uamtest-registry
+    ports:
+      - "127.0.0.1:5000:5000"
+  npm:
+    image: ${UAM_TEST_NPM_IMAGE:-jc21/nginx-proxy-manager:2.12.3}
+    container_name: uamtest-npm
+    environment:
+      DISABLE_IPV6: "true"
+    ports:
+      - "127.0.0.1:8080:80"
+      - "127.0.0.1:8081:81"
+    volumes:
+      - npm-data:/data
+      - npm-letsencrypt:/etc/letsencrypt
+volumes:
+  npm-data:
+  npm-letsencrypt:

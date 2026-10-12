@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>{{NAME}}</Name>
+  <Repository>{{IMAGE}}</Repository>
+  <Registry/>
+  <Network>bridge</Network>
+  <Privileged>false</Privileged>
+  <Shell>sh</Shell>
+  <Support>https://github.com/uamtest/{{REPO}}/issues</Support>
+  <Project>https://github.com/uamtest/{{REPO}}</Project>
+  <Overview>Integration test app.</Overview>
+  <Category>Tools:</Category>
+  <WebUI>http://[IP]:[PORT:3000]/</WebUI>
+  <Icon/>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <Config Name="Web UI" Target="3000" Default="3000" Mode="tcp" Description="" Type="Port" Display="always" Required="true" Mask="false">{{PORT}}</Config>
+  <Config Name="Data" Target="/data" Default="/tmp/uamtest-appdata/{{NAME}}" Mode="rw" Description="" Type="Path" Display="always" Required="true" Mask="false">{{DATA}}</Config>
+  <Config Name="TZ" Target="TZ" Default="Europe/Copenhagen" Mode="" Description="" Type="Variable" Display="always" Required="false" Mask="false">Europe/Berlin</Config>
+</Container>
