@@ -87,3 +87,11 @@ def test_ui_is_mounted(tmp_path):
         assert page.status_code in (302, 303, 307) and "/setup" in page.headers["location"]
         assert client.get("/setup").status_code == 200
         assert client.get("/static/vendor/htmx-2.0.4.min.js").status_code == 200
+
+
+def test_pages_load_busy_feedback_script(tmp_path):
+    cfg = AppConfig(data_dir=tmp_path, fakes=True, start_scheduler=False)
+    with TestClient(create_app(cfg)) as client:
+        assert '<script src="/static/uam.js" defer></script>' in client.get("/setup").text
+        js = client.get("/static/uam.js")
+        assert js.status_code == 200 and "htmx:beforeRequest" in js.text and "aria-busy" in js.text
