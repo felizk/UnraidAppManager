@@ -230,3 +230,15 @@ async def test_credentials_edit_replaces_secret_and_username(env: UiEnv) -> None
         f"/credentials/{cred.id}/update", data={"username": "me2", "secret": ""}, headers=HX
     )
     assert "Nothing to change" in r.text and await env.fakes.vault.reveal(cred.id) == "new-token"
+
+
+async def test_credentials_test_flags_missing_scopes_and_username(env: UiEnv) -> None:
+    env.fakes.github.token_scopes["ghp_noscopes"] = []
+    env.fakes.github.token_scopes["ghp_good"] = ["read:packages", "repo"]
+    bare = await env.fakes.vault.store("bare", CredentialKind.GITHUB_PAT, "", "ghp_noscopes")
+    good = await env.fakes.vault.store("good", CredentialKind.GITHUB_PAT, "felizk", "ghp_good")
+    r = await env.client.post(f"/credentials/{bare.id}/test", headers=HX)
+    assert "test-result fail" in r.text
+    assert "missing the scope(s) repo, read:packages" in r.text and "set the username" in r.text
+    r = await env.client.post(f"/credentials/{good.id}/test", headers=HX)
+    assert "test-result ok" in r.text and "ghp_good" not in r.text

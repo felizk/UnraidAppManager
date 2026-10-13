@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import re
 import time
 from collections.abc import Callable
@@ -13,6 +14,8 @@ import httpx
 
 from uam.domain import RegistryAuth
 from uam.errors import AuthError, NotFound, RateLimited, RemoteError
+
+log = logging.getLogger(__name__)
 
 MANIFEST_ACCEPT = ", ".join(
     (
@@ -149,10 +152,21 @@ class HttpRegistryClient:
             resp = await self._client.get(
                 params["realm"], params=query, auth=httpx.BasicAuth(auth.username, auth.password)
             )
+            if resp.status_code in (401, 403):
+                # A public image doesn't need the credential; try without it before giving up.
+                anonymous = await self._client.get(params["realm"], params=query)
+                if anonymous.status_code not in (401, 403):
+                    log.warning(
+                        "registry %s refused the stored credential (%s); continuing anonymously",
+                        params["realm"],
+                        resp.status_code,
+                    )
+                    resp = anonymous
         else:
             resp = await self._client.get(params["realm"], params=query)
         if resp.status_code in (401, 403):
-            raise AuthError(f"token endpoint refused credentials ({resp.status_code})")
+            hint = " (check the credential's username and token scopes)" if auth else ""
+            raise AuthError(f"token endpoint refused credentials ({resp.status_code}){hint}")
         self._raise_for_status(resp)
         try:
             data = resp.json()

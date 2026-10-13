@@ -45,6 +45,9 @@ def _to_credential(row: CredentialRow) -> Credential:
     )
 
 
+GHCR_PLACEHOLDER_USER = "uam"
+
+
 class FernetVault:
     """Stores credentials encrypted with Fernet. Secrets are only returned by `reveal`."""
 
@@ -131,8 +134,12 @@ class FernetVault:
                 match = next((r for r in rows if r.kind == CredentialKind.GITHUB_PAT.value), None)
             if match is None:
                 return None
+            username = match.username
+            if not username and match.kind == CredentialKind.GITHUB_PAT.value:
+                # GHCR accepts any username with a PAT, but rejects an empty one (403).
+                username = GHCR_PLACEHOLDER_USER
             return RegistryAuth(
-                username=match.username, password=self._decrypt(match.secret_ciphertext), registry=host
+                username=username, password=self._decrypt(match.secret_ciphertext), registry=host
             )
 
     async def rotate(self) -> int:

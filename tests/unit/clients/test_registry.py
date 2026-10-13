@@ -220,3 +220,30 @@ async def test_localhost_registry_uses_plain_http() -> None:
     assert await client.get_digest("localhost:5000/app:dev", None) == "sha256:local"
     assert route.called
     await client.aclose()
+
+
+async def test_refused_credential_falls_back_to_anonymous(client: HttpRegistryClient) -> None:
+    """A bad stored token must not break update checks for a public image."""
+    with respx.mock() as m:
+        manifest = m.head("https://ghcr.io/v2/me/app/manifests/latest")
+        manifest.side_effect = [
+            challenge("https://ghcr.io/token", "ghcr.io", "repository:me/app:pull"),
+            httpx.Response(200, headers={"Docker-Content-Digest": DIGEST}),
+        ]
+        token = m.get("https://ghcr.io/token")
+        token.side_effect = [httpx.Response(403), httpx.Response(200, json={"token": "anon"})]
+        auth = RegistryAuth(username="u", password="bad", registry="ghcr.io")
+        assert await client.get_digest("ghcr.io/me/app:latest", auth) == DIGEST
+        assert "authorization" in token.calls[0].request.headers
+        assert "authorization" not in token.calls[1].request.headers
+
+
+async def test_refused_credential_on_private_image_explains(client: HttpRegistryClient) -> None:
+    with respx.mock() as m:
+        m.head("https://ghcr.io/v2/me/app/manifests/latest").mock(
+            return_value=challenge("https://ghcr.io/token", "ghcr.io", "repository:me/app:pull")
+        )
+        m.get("https://ghcr.io/token").respond(403)
+        auth = RegistryAuth(username="u", password="bad", registry="ghcr.io")
+        with pytest.raises(AuthError, match="username and token scopes"):
+            await client.get_digest("ghcr.io/me/app:latest", auth)

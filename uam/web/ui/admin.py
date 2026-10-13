@@ -13,7 +13,7 @@ from uam.errors import ConflictError, UamError, ValidationError
 from uam.logging import redact
 from uam.settings import Settings
 from uam.web.api.schemas import SettingsModel
-from uam.web.deps import ApiServices, ExportPlan
+from uam.web.deps import ApiServices, ExportPlan, pat_check
 from uam.web.ui.support import (
     Services,
     UiRoute,
@@ -115,8 +115,8 @@ async def test_credential(credential_id: int, request: Request, services: Servic
     ok, detail = True, "registry credentials are checked on first pull"
     try:
         if cred.kind == CredentialKind.GITHUB_PAT:
-            scopes = await services.github.validate_token(await services.vault.reveal(credential_id))
-            detail = "token accepted by GitHub" + (f" (scopes: {', '.join(scopes)})" if scopes else "")
+            token = await services.vault.reveal(credential_id)
+            ok, detail = pat_check(token, cred.username, await services.github.validate_token(token))
         elif cred.kind == CredentialKind.NPM:
             if services.proxy is None:
                 ok, detail = False, "Nginx Proxy Manager is not configured"

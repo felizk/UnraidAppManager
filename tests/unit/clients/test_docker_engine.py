@@ -464,3 +464,22 @@ async def test_real_docker_smoke() -> None:
     finally:
         await engine.remove(cid, force=True)
     assert await engine.inspect(name) is None
+
+
+async def test_pull_retries_anonymously_when_credential_is_refused() -> None:
+    client = MagicMock()
+    ok = MagicMock()
+    ok.attrs = {"RepoDigests": ["ghcr.io/me/app@sha256:" + "d" * 64]}
+    client.images.pull.side_effect = [api_error(500, "error from registry: denied"), ok]
+    auth = RegistryAuth(username="u", password="bad", registry="ghcr.io")
+    assert await make_engine(client).pull("ghcr.io/me/app:latest", auth) == "sha256:" + "d" * 64
+    assert client.images.pull.call_args_list[1].args == ("ghcr.io/me/app:latest",)
+    assert client.images.pull.call_args_list[1].kwargs == {}
+
+
+async def test_pull_auth_error_kept_when_anonymous_also_fails() -> None:
+    client = MagicMock()
+    client.images.pull.side_effect = [api_error(403), api_error(403)]
+    auth = RegistryAuth(username="u", password="bad", registry="ghcr.io")
+    with pytest.raises(AuthError):
+        await make_engine(client).pull("ghcr.io/me/app:latest", auth)

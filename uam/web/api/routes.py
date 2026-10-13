@@ -64,6 +64,7 @@ from uam.web.deps import (
     get_exporter,
     get_orchestrator,
     get_services,
+    pat_check,
 )
 from uam.web.deps import app_logs as container_logs
 
@@ -217,8 +218,10 @@ async def test_credential(
     cred = await services.vault.get(credential_id)
     try:
         if cred.kind == CredentialKind.GITHUB_PAT:
-            scopes = await services.github.validate_token(await services.vault.reveal(credential_id))
-            return CredentialTestOut(ok=True, scopes=scopes, detail="token accepted by GitHub")
+            token = await services.vault.reveal(credential_id)
+            scopes = await services.github.validate_token(token)
+            ok, detail = pat_check(token, cred.username, scopes)
+            return CredentialTestOut(ok=ok, scopes=scopes, detail=detail)
         if cred.kind == CredentialKind.NPM:
             if services.proxy is None:
                 return CredentialTestOut(ok=False, detail="Nginx Proxy Manager is not configured")

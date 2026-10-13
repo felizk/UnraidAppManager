@@ -118,6 +118,28 @@ class ApiServices:
     auth: AuthManager | None = None
 
 
+REQUIRED_PAT_SCOPES = ("repo", "read:packages")
+
+
+def pat_check(token: str, username: str, scopes: list[str]) -> tuple[bool, str]:
+    """Judge a GitHub token GitHub accepted: classic tokens must carry the scopes UAM needs."""
+    problems = []
+    if token.startswith("ghp_"):
+        missing = [
+            s
+            for s in REQUIRED_PAT_SCOPES
+            if s not in scopes and not (s == "read:packages" and "write:packages" in scopes)
+        ]
+        if missing:
+            problems.append(f"the token is missing the scope(s) {', '.join(missing)}")
+    if not username:
+        problems.append("set the username to your GitHub user name")
+    shown = f" (scopes: {', '.join(scopes)})" if scopes else " (no scopes)"
+    if problems:
+        return False, "token accepted by GitHub" + shown + ", but " + "; ".join(problems)
+    return True, "token accepted by GitHub" + (shown if scopes or token.startswith("ghp_") else "")
+
+
 async def app_logs(services: ApiServices, app: App, tail: int) -> str | None:
     """The app's current container output, or None when it has no container.
 

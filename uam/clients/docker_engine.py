@@ -31,8 +31,9 @@ def _translate(exc: docker.errors.DockerException, what: str) -> Exception:
         status = exc.status_code or 0
         if status == 409:
             return ConflictError(f"{what}: {exc.explanation or exc}")
-        if status in (401, 403):
-            return AuthError(f"{what}: {exc.explanation or exc}")
+        text = str(exc.explanation or exc)
+        if status in (401, 403) or any(w in text.lower() for w in ("unauthorized", "denied")):
+            return AuthError(f"{what}: {text}")
         return RemoteError(status, str(exc.explanation or exc))
     return RemoteError(0, f"{what}: {exc}")
 
@@ -142,7 +143,15 @@ class SdkDockerEngine:
         try:
             image = self.client.images.pull(image_ref, **kwargs)
         except docker.errors.DockerException as exc:
-            raise _translate(exc, f"pull {image_ref}") from exc
+            err = _translate(exc, f"pull {image_ref}")
+            if not (kwargs and isinstance(err, AuthError)):
+                raise err from exc
+            # The credential was refused; a public image can still be pulled without it.
+            try:
+                image = self.client.images.pull(image_ref)
+            except docker.errors.DockerException:
+                raise err from exc
+            log.warning("registry refused the stored credential for %s; pulled anonymously", image_ref)
         digest = _matching_digest(image.attrs.get("RepoDigests") or [], image_ref)
         if digest is None:
             raise DeployError("pull", f"no repo digest for {image_ref}")

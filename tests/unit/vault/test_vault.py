@@ -168,3 +168,11 @@ def test_keys_env_and_old(tmp_path: Path) -> None:
     keys = load_keys(tmp_path, {"UAM_SECRET_KEY": a, "UAM_SECRET_KEY_OLD": f"{b}, {c}"})
     assert keys == [a.encode(), b.encode(), c.encode()]
     assert not (tmp_path / "secret.key").exists()
+
+
+async def test_ghcr_fallback_without_username_uses_placeholder(tmp_db: Database) -> None:
+    """GHCR's token endpoint rejects an empty username (403) but accepts any other one."""
+    vault = make_vault(tmp_db)
+    await vault.store("gh", CredentialKind.GITHUB_PAT, "", "ghp_x")
+    auth = await vault.registry_auth_for("ghcr.io/me/app:latest")
+    assert auth is not None and auth.username == "uam" and auth.password == "ghp_x"
