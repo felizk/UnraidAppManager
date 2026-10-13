@@ -332,9 +332,13 @@ class Orchestrator:
         proxy: ProxySettings | None = None,
         image_tag_override: str | None = None,
     ) -> App:
-        """Recreate the container with new settings, reusing the exact running image.
+        """Save new settings and recreate the container with them, reusing the exact running image.
 
         A changed `image_tag_override` pulls the new tag instead. Also clears `labels_pending`.
+        The settings are kept even when they can't be applied: an app without a running
+        container (not installed, failed) just stores them for its next install, and when the
+        recreate fails the previous container is restored but the new settings stay saved
+        (with `needs_attention` explaining) so the edit isn't lost.
         """
         async with self.locks.hold(app_id):
             app = await self._apps.get(app_id)
@@ -346,7 +350,32 @@ class Orchestrator:
             new_tag = image_tag_override is not None and image_tag_override != app.image_tag_override
             if image_tag_override is not None:
                 candidate.image_tag_override = image_tag_override
-            return await self._redeploy("reconfigure", app, candidate, False, new_tag)
+            if app.state not in _OPERABLE:
+                if app.state not in _INSTALLABLE:
+                    raise ConflictError(f"cannot change settings while the app is {app.state.value}")
+                self._take_settings(app, candidate)
+                await self._apps.save(app)
+                await self._event(
+                    app.id, "reconfigure.saved", "settings saved; they apply on the next install"
+                )
+                return app
+            try:
+                return await self._redeploy("reconfigure", app, candidate, False, new_tag)
+            except DeployError as exc:
+                stored = await self._apps.get(app_id)
+                self._take_settings(stored, candidate)
+                stored.needs_attention = (
+                    f"Settings saved, but applying them failed at '{exc.stage}': {exc.cause}. "
+                    "The previous container was restored; adjust the settings or update the app to retry."
+                )
+                await self._apps.save(stored)
+                raise
+
+    @staticmethod
+    def _take_settings(app: App, candidate: App) -> None:
+        app.overrides = candidate.overrides
+        app.proxy = candidate.proxy
+        app.image_tag_override = candidate.image_tag_override
 
     async def _redeploy(
         self, op: str, app: App, candidate: App, apply_template: bool, pull_new_image: bool

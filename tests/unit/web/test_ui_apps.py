@@ -488,3 +488,21 @@ async def test_sources_edit_changes_credential(env: UiEnv) -> None:
     assert (stored.ref, stored.template_path, stored.credential_id) == ("dev", None, cred.id)
     cancel = await env.client.get(f"/sources/{src.id}/row", headers=HX)
     assert "editing" not in cancel.text
+
+
+async def test_edit_path_round_trip(env: UiEnv) -> None:
+    src = await env.seed_source("simple-web.xml")
+    app = await env.fakes.apps.add(make_app(source_id=src.id, template_path="unraid/notes.xml"))
+    await env.client.post(
+        f"/apps/{app.id}/edit",
+        data={"ov:Path:/data": "/mnt/user/appdata/notes-moved", "auto_ports": "1", "auto_update_image": "1"},
+        headers=HX,
+    )
+    _, (_aid, overrides, _p, _t) = next(c for c in env.api.orchestrator.calls if c[0] == "reconfigure")
+    assert overrides["Path:/data"] == "/mnt/user/appdata/notes-moved"
+    # once saved, the edit form shows the new path
+    stored = await env.fakes.apps.get(app.id)
+    stored.overrides = dict(overrides)
+    await env.fakes.apps.save(stored)
+    page = await env.client.get(f"/apps/{app.id}/edit")
+    assert 'value="/mnt/user/appdata/notes-moved"' in page.text

@@ -380,7 +380,8 @@ async def test_reconfigure_rolls_back_imported_app(env: Env) -> None:
     assert err.value.stage == "create_new"
     stored = await env.f.apps.get(app_id)
     assert stored.labels_pending is True and stored.state == AppState.FAILED_UPDATE
-    assert stored.overrides == {}
+    # the edit is kept (and explained) even though the old container was restored
+    assert stored.overrides == {"Variable:TZ": "UTC"} and "Settings saved" in (stored.needs_attention or "")
     assert stored.container_id == "f" * 64
     (container,) = env.f.docker.containers.values()
     assert (container.id, container.name, container.state) == ("f" * 64, "notes", "running")
@@ -611,3 +612,38 @@ async def test_unhealthy_install_keeps_container_output(env: Env, monkeypatch: p
     assert "DATABASE_URL is not set" in event["message"] and "abc123" not in event["message"]
     stored = await env.f.apps.get(app_id)
     assert "did not become healthy" in (stored.last_error or "")
+
+
+async def test_reconfigure_saves_settings_for_app_that_is_not_running(env: Env) -> None:
+    """A failed app (e.g. one that never became healthy) can be edited; the next install uses it."""
+    app_id = await env.new_app(state=AppState.FAILED)
+    app = await env.orch.reconfigure(app_id, {"Path:/data": "/mnt/user/appdata/elsewhere"}, None, None)
+    assert app.overrides == {"Path:/data": "/mnt/user/appdata/elsewhere"}
+    assert (await env.f.apps.get(app_id)).overrides == {"Path:/data": "/mnt/user/appdata/elsewhere"}
+    assert env.f.docker.containers == {}  # nothing to recreate
+    await env.orch.install(app_id)
+    [spec] = env.f.docker.specs.values()
+    assert any(m.host_path == "/mnt/user/appdata/elsewhere" for m in spec.mounts)
+
+
+async def test_reconfigure_keeps_settings_when_applying_fails(env: Env) -> None:
+    app_id = await env.installed()
+    env.f.docker.fail_next("health")
+    with pytest.raises(DeployError):
+        await env.orch.reconfigure(app_id, {"Path:/data": "/mnt/user/appdata/new"}, None, None)
+    stored = await env.f.apps.get(app_id)
+    assert stored.overrides == {"Path:/data": "/mnt/user/appdata/new"}
+    assert stored.needs_attention and "Settings saved" in stored.needs_attention
+    # the previous container is running again with the old path
+    [old] = [c for c in env.f.docker.containers.values() if c.state == "running"]
+    assert all(m.host_path != "/mnt/user/appdata/new" for m in old.mounts)
+
+
+async def test_reconfigure_applies_path_change(env: Env) -> None:
+    app_id = await env.installed()
+    await env.orch.reconfigure(app_id, {"Path:/data": "/mnt/user/appdata/moved"}, None, None)
+    app = await env.f.apps.get(app_id)
+    assert app.overrides == {"Path:/data": "/mnt/user/appdata/moved"}
+    assert any(
+        m.host_path == "/mnt/user/appdata/moved" for m in env.f.docker.specs[app.container_id or ""].mounts
+    )
