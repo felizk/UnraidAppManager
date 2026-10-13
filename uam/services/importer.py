@@ -218,6 +218,13 @@ def derive_dropped(
     return tuple(dropped)
 
 
+def _unreadable(file_name: str, error: str) -> str:
+    return (
+        f"Unraid's saved template {file_name} (templates-user on the flash drive) could not be read: "
+        f"{error}. The import works without it, using the running container's settings."
+    )
+
+
 class DefaultImporter:
     """`Importer` implementation: scan, plan and apply the adoption of foreign containers."""
 
@@ -417,7 +424,7 @@ class DefaultImporter:
             if direct.is_file():
                 tpl, _, error = self._load_flash(direct)
                 if tpl is None:
-                    return str(direct), None, [f"flash template {direct.name} could not be parsed: {error}"]
+                    return str(direct), None, [_unreadable(direct.name, error)]
                 return str(direct), tpl, []
             if not base.is_dir():
                 return None, None, []
@@ -426,7 +433,7 @@ class DefaultImporter:
                 if tpl is not None and tpl.name == name:
                     return str(path), tpl, []
                 if tpl is None and raw_name == name:
-                    return str(path), None, [f"flash template {path.name} could not be parsed: {error}"]
+                    return str(path), None, [_unreadable(path.name, error)]
         except OSError as e:
             return None, None, [f"could not read flash templates in {directory}: {e}"]
         return None, None, []

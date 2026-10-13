@@ -44,11 +44,16 @@ def webui_port(template: UnraidTemplate) -> int | None:
     return int(m.group(1)) if m else None
 
 
-def _parse_bool(text: str | None, what: str) -> bool:
+def _parse_bool(text: str | None, what: str, strict: bool) -> bool:
+    """Parse a template boolean.
+
+    Unraid itself treats anything other than "true" as false, and real templates contain values
+    like Mask="{8}", so only strict mode (used by uam-lint) rejects unknown values.
+    """
     value = (text or "").strip().lower()
     if value in _TRUE:
         return True
-    if value in _FALSE or value == "":
+    if value in _FALSE or value == "" or not strict:
         return False
     raise TemplateParseError(f"invalid boolean for {what}: {text!r}")
 
@@ -88,7 +93,7 @@ def _canonical_raw(elem: ET.Element) -> str:
     return "".join(out)
 
 
-def _config_from_element(elem: ET.Element) -> TemplateConfig:
+def _config_from_element(elem: ET.Element, strict: bool) -> TemplateConfig:
     a = elem.attrib
     target = a.get("Target")
     if target is None:
@@ -105,8 +110,8 @@ def _config_from_element(elem: ET.Element) -> TemplateConfig:
         mode=a.get("Mode", "tcp" if ctype == "Port" else ""),
         description=a.get("Description", ""),
         display=a.get("Display", "always") or "always",
-        required=_parse_bool(a.get("Required"), "Config@Required"),
-        mask=_parse_bool(a.get("Mask"), "Config@Mask"),
+        required=_parse_bool(a.get("Required"), "Config@Required", strict),
+        mask=_parse_bool(a.get("Mask"), "Config@Mask", strict),
     )
 
 
@@ -159,7 +164,14 @@ def _legacy_configs(root: ET.Element) -> tuple[str | None, list[TemplateConfig]]
 
 
 class XmlTemplateCodec:
-    """`TemplateCodec` implementation backed by defusedxml."""
+    """`TemplateCodec` implementation backed by defusedxml.
+
+    By default it is as forgiving as Unraid about odd attribute values; `strict=True` (uam-lint)
+    reports them instead.
+    """
+
+    def __init__(self, strict: bool = False) -> None:
+        self._strict = strict
 
     def parse(self, xml: str) -> UnraidTemplate:
         """Parse Unraid template XML (v2 or legacy) into an `UnraidTemplate`."""
@@ -177,9 +189,9 @@ class XmlTemplateCodec:
             raise TemplateParseError("template has no <Name>")
         if not values["repository"]:
             raise TemplateParseError("template has no <Repository>")
-        privileged = _parse_bool(values.pop("privileged"), "Privileged")
+        privileged = _parse_bool(values.pop("privileged"), "Privileged", self._strict)
 
-        configs = [_config_from_element(e) for e in root.findall("Config")]
+        configs = [_config_from_element(e, self._strict) for e in root.findall("Config")]
         legacy_network, legacy = _legacy_configs(root)
         if root.find("Network") is None and legacy_network:
             values["network"] = legacy_network

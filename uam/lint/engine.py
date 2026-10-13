@@ -115,7 +115,7 @@ def load_document(path: str, xml: str, repo_root: Path, *, in_template_dir: bool
                 el.text = placeholder
         source = ET.tostring(root, encoding="unicode")
     try:
-        template = XmlTemplateCodec().parse(source)
+        template = XmlTemplateCodec(strict=True).parse(source)
     except TemplateParseError as exc:
         findings.append(_error(path, "UAM001", str(exc)))
         return LoadedDoc(path, findings)

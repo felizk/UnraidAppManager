@@ -157,7 +157,7 @@ async def test_scan_unparseable_flash_template_warns(env: Env) -> None:
     env.flash(text="<Container><Name>notes</Name>")
     [c] = await env.importer.scan()
     assert c.flash_template is None and c.flash_template_path is not None
-    assert any("could not be parsed" in w for w in c.warnings)
+    assert any("could not be read" in w for w in c.warnings)
 
 
 async def test_scan_matches_existing_source_and_fills_template_path(env: Env) -> None:

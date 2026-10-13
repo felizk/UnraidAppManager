@@ -150,7 +150,6 @@ def test_booleans(text: str, expected: bool) -> None:
         "<Template><Name>a</Name></Template>",
         "<Container><Repository>r</Repository></Container>",
         "<Container><Name>a</Name></Container>",
-        HEAD + "<Privileged>maybe</Privileged></Container>",
         HEAD + '<Config Name="x" Type="Port"/></Container>',
         HEAD + '<Config Target="x" Type="Bogus"/></Container>',
         '<?xml version="1.0"?><!DOCTYPE x [<!ENTITY a "b">]><Container><Name>&a;</Name></Container>',
@@ -186,3 +185,16 @@ def test_escaping_random_strings() -> None:
 def test_webui_port_none() -> None:
     assert webui_port(UnraidTemplate(name="a", repository="r")) is None
     assert webui_port(UnraidTemplate(name="a", repository="r", webui="http://[IP]:80/")) is None
+
+
+@pytest.mark.parametrize("odd", ["{8}", "yes-ish", "maybe"])
+def test_odd_booleans_are_false_like_unraid_but_strict_rejects(odd: str) -> None:
+    xml = (
+        HEAD
+        + f"<Privileged>{odd}</Privileged>"
+        + f'<Config Name="n" Target="T" Type="Variable" Required="{odd}" Mask="{odd}"/></Container>'
+    )
+    t = codec.parse(xml)
+    assert t.privileged is False and t.configs[0].required is False and t.configs[0].mask is False
+    with pytest.raises(TemplateParseError, match="invalid boolean"):
+        XmlTemplateCodec(strict=True).parse(xml)
