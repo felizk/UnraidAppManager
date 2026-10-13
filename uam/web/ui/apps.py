@@ -11,6 +11,7 @@ from uam.logging import redact
 from uam.web.deps import (
     OrchestratorService,
     UpdateCheckerService,
+    app_logs,
     get_checker,
     get_orchestrator,
 )
@@ -156,7 +157,8 @@ async def logs_fragment(
 ) -> Response:
     """Last log lines of the container, secrets masked."""
     app = await services.apps.get(app_id)
-    if not app.container_id:
-        return render(request, "_logs.html", logs="(no container yet)", app_id=app_id)
-    text = await services.docker.logs(app.container_id, tail)
+    text = await app_logs(services, app, tail)
+    if text is None:
+        msg = "(no container; the output of failed install/update attempts is kept in Events)"
+        return render(request, "_logs.html", logs=msg, app_id=app_id)
     return render(request, "_logs.html", logs=redact(text) or "(no output)", app_id=app_id)

@@ -595,3 +595,19 @@ async def test_ssl_not_forced_without_certificate(env: Env) -> None:
     await env.installed(proxy=ProxySettings(subdomain="notes", ssl_forced=True))
     [host] = env.f.proxy.hosts.values()
     assert env.f.proxy.settings[host.id].ssl_forced is False
+
+
+async def test_unhealthy_install_keeps_container_output(env: Env, monkeypatch: pytest.MonkeyPatch) -> None:
+    async def logs(container_id: str, tail: int = 200) -> str:
+        return "starting...\nerror: DATABASE_URL is not set token=abc123"
+
+    monkeypatch.setattr(env.f.docker, "logs", logs)
+    app_id = await env.new_app()
+    env.f.docker.fail_next("health")
+    with pytest.raises(DeployError):
+        await env.orch.install(app_id)
+    [event] = [e for e in env.f.events.events if e["kind"] == "install.logs"]
+    assert event["level"] == "error"
+    assert "DATABASE_URL is not set" in event["message"] and "abc123" not in event["message"]
+    stored = await env.f.apps.get(app_id)
+    assert "did not become healthy" in (stored.last_error or "")

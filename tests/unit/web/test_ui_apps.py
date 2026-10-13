@@ -446,3 +446,24 @@ async def test_delete_source(env: UiEnv) -> None:
     assert (await env.client.delete(f"/sources/{src.id}", headers=HX)).status_code == 200
     assert await env.fakes.sources.list() == []
     assert (await env.client.delete(f"/sources/{src.id}", headers=HX)).status_code == 404
+
+
+async def test_logs_fragment_finds_starting_container_by_name(env: UiEnv) -> None:
+    """During an install the new container isn't recorded on the app yet; it is found by name."""
+    src = await env.seed_source()
+    app = await env.fakes.apps.add(
+        make_app(name="starting", source_id=src.id, container_id=None, state=AppState.INSTALLING)
+    )
+    env.fakes.docker.seed_container(ContainerInfo("new1", "starting", "img", None, "running", None, {}, ()))
+    env.fakes.docker.log_text["new1"] = "waiting for database..."
+    r = await env.client.get(f"/fragments/apps/{app.id}/logs")
+    assert "waiting for database" in r.text
+    detail = await env.client.get(f"/apps/{app.id}")
+    assert "every 3s" in detail.text
+
+
+async def test_multiline_events_render_as_pre(env: UiEnv) -> None:
+    app = await env.fakes.apps.add(make_app())
+    await env.fakes.events.record(app.id, "install.logs", "Last 100 log lines:\nboom", "error")
+    r = await env.client.get(f"/fragments/apps/{app.id}/events")
+    assert '<pre class="logs">Last 100 log lines:\nboom</pre>' in r.text

@@ -33,6 +33,7 @@ from uam.domain import (
     UnraidTemplate,
 )
 from uam.errors import ConflictError, DeployError, NotFound, ValidationError
+from uam.logging import redact
 from uam.services.locks import AppLocks
 from uam.settings import Settings
 
@@ -228,8 +229,24 @@ class Orchestrator:
 
     async def _wait_healthy(self, app_id: int, op: str, container_id: str) -> None:
         if not await self._docker.wait_healthy(container_id):
-            raise RuntimeError("container did not become healthy")
+            info = await self._docker.inspect(container_id)
+            status = f"state={info.state}, health={info.health or 'n/a'}" if info else "container is gone"
+            await self._capture_logs(app_id, op, container_id)
+            raise RuntimeError(f"container did not become healthy ({status})")
         await self._event(app_id, f"{op}.health", "container is healthy")
+
+    async def _capture_logs(self, app_id: int, op: str, container_id: str, tail: int = 100) -> None:
+        """Keep the failed container's output in the event log, since the container is removed next."""
+        try:
+            text = (await self._docker.logs(container_id, tail)).rstrip()
+        except Exception as exc:
+            text = f"(could not read logs: {exc})"
+        await self._event(
+            app_id,
+            f"{op}.logs",
+            f"Last {tail} log lines before the container was removed:\n{redact(text) or '(no output)'}",
+            "error",
+        )
 
     # ------------------------------------------------------------------ NPM
 

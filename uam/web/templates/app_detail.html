@@ -65,7 +65,10 @@
 <article>
   <h2>Logs</h2>
   <button class="sm outline" hx-get="/fragments/apps/{{ v.app.id }}/logs" hx-target="#logs" hx-swap="innerHTML">Refresh</button>
-  <div id="logs" hx-get="/fragments/apps/{{ v.app.id }}/logs" hx-trigger="load" hx-swap="innerHTML">Loading...</div>
+  {# While installing/updating, follow the new container's output as it starts. #}
+  <div id="logs" hx-get="/fragments/apps/{{ v.app.id }}/logs"
+       hx-trigger="load{% if v.app.state.value in ('installing', 'updating') %}, every 3s{% endif %}"
+       hx-swap="innerHTML">Loading...</div>
 </article>
 
 <article>

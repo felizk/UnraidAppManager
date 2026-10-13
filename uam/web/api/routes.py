@@ -62,6 +62,7 @@ from uam.web.deps import (
     get_orchestrator,
     get_services,
 )
+from uam.web.deps import app_logs as container_logs
 
 log = logging.getLogger("uam.api")
 
@@ -454,9 +455,9 @@ async def app_logs(
 ) -> LogsOut:
     """Last `tail` log lines of the app's container, with token-like strings masked."""
     app = await services.apps.get(app_id)
-    if not app.container_id:
-        raise ConflictError("app has no container")
-    text = await services.docker.logs(app.container_id, tail)
+    text = await container_logs(services, app, tail)
+    if text is None:
+        raise ConflictError("app has no container (see its events for the output of failed attempts)")
     return LogsOut(app_id=app_id, tail=tail, logs=redact(text))
 
 

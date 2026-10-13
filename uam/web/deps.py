@@ -118,6 +118,20 @@ class ApiServices:
     auth: AuthManager | None = None
 
 
+async def app_logs(services: ApiServices, app: App, tail: int) -> str | None:
+    """The app's current container output, or None when it has no container.
+
+    The container is looked up by name first, so a container that is still starting during an
+    install or update (and isn't recorded on the app yet) is found too.
+    """
+    info = await services.docker.inspect(app.name)
+    if info is None and app.container_id:
+        info = await services.docker.inspect(app.container_id)
+    if info is None:
+        return None
+    return await services.docker.logs(info.id, tail)
+
+
 def get_services(request: Request) -> ApiServices:
     """The `ApiServices` stored on the app by the wiring."""
     services: ApiServices = request.app.state.services
