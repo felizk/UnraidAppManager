@@ -33,6 +33,10 @@ def _to_host(raw: dict[str, Any]) -> ProxyHost:
         forward_scheme=str(raw.get("forward_scheme", "http")),
         forward_host=str(raw.get("forward_host", "")),
         forward_port=int(raw.get("forward_port", 0)),
+        certificate_id=int(raw.get("certificate_id") or 0) or None,
+        ssl_forced=bool(raw.get("ssl_forced")),
+        websockets=bool(raw.get("allow_websocket_upgrade")),
+        access_list_id=int(raw.get("access_list_id") or 0) or None,
     )
 
 

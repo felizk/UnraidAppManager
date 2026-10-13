@@ -455,3 +455,29 @@ def test_own_container_id_from_mountinfo(tmp_path) -> None:
     info.write_text("1 2 0:1 / / rw - overlay overlay rw\n")
     assert own_container_id(str(info)) is None
     assert own_container_id(str(tmp_path / "missing")) is None
+
+
+async def test_plan_keeps_existing_proxy_tls_settings(env: Env) -> None:
+    from dataclasses import replace as dc_replace
+
+    host_id = env.fakes.proxy.seed_foreign_host("wiki.example.com", "192.168.1.10", 8080)
+    proxy = env.fakes.proxy
+    proxy.hosts[host_id] = dc_replace(
+        proxy.hosts[host_id], certificate_id=5, ssl_forced=True, websockets=True, access_list_id=2
+    )
+    p = await plan(env)
+    assert (p.proxy.certificate_id, p.proxy.ssl_forced, p.proxy.websockets, p.proxy.access_list_id) == (
+        5,
+        True,
+        True,
+        2,
+    )
+
+
+async def test_plan_uses_default_certificate_for_plain_http_host(env: Env) -> None:
+    env.fakes.proxy.seed_foreign_host("wiki.example.com", "192.168.1.10", 8080)
+    s = await env.fakes.settings.get()
+    s.default_certificate_id = 9
+    await env.fakes.settings.save(s)
+    p = await plan(env)
+    assert p.proxy.certificate_id == 9 and p.proxy.ssl_forced

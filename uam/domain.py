@@ -230,6 +230,10 @@ class ProxyHost:
     forward_scheme: str
     forward_host: str
     forward_port: int
+    certificate_id: int | None = None
+    ssl_forced: bool = False
+    websockets: bool = False
+    access_list_id: int | None = None
 
 
 @dataclass(frozen=True, slots=True)

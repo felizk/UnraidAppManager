@@ -34,6 +34,7 @@ from uam.domain import (
 )
 from uam.errors import ConflictError, DeployError, NotFound, ValidationError
 from uam.services.locks import AppLocks
+from uam.settings import Settings
 
 OLD_SUFFIX = "__uam_old"
 _INSTALLABLE = {AppState.NOT_INSTALLED, AppState.FAILED}
@@ -262,10 +263,24 @@ class Orchestrator:
                 raise ValidationError("template defines no WebUI port to forward to")
             domain = self._domain(app.proxy.subdomain, settings.base_domain)
             await self._event(app.id, "npm.sync", f"proxy {domain} -> {host}:{port}")
-            await self._proxy.ensure_proxy_host(domain, host, port, app.proxy, None)
+            proxy = self._effective_proxy(app, settings)
+            await self._proxy.ensure_proxy_host(domain, host, port, proxy, None)
         except Exception as exc:
             app.needs_attention = f"NPM registration failed: {exc}"
             await self._event(app.id, "npm.failed", f"NPM step failed: {exc}", "warning")
+
+    @staticmethod
+    def _effective_proxy(app: App, settings: Settings) -> ProxySettings:
+        """The app's proxy settings with the default certificate filled in.
+
+        Without a certificate, forcing SSL would only produce a broken redirect, so it is turned off.
+        """
+        proxy = app.proxy
+        if proxy.certificate_id is None and settings.default_certificate_id is not None:
+            proxy = replace(proxy, certificate_id=settings.default_certificate_id)
+        if proxy.certificate_id is None and proxy.ssl_forced:
+            proxy = replace(proxy, ssl_forced=False)
+        return proxy
 
     async def _delete_proxy(self, app: App) -> None:
         settings = await self._settings.get()

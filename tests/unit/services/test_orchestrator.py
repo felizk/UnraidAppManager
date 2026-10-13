@@ -576,3 +576,22 @@ async def test_image_only_update_keeps_installed_template(env: Env) -> None:
     app = await env.f.apps.get(app_id)
     assert env.f.docker.specs[app.container_id or ""].env["TZ"] == "UTC"
     assert env.f.docker.specs[app.container_id or ""].labels["uam.source"] == "felizk/notes"
+
+
+async def test_default_certificate_is_applied(env: Env) -> None:
+    await env.configure_npm()
+    s = await env.f.settings.get()
+    s.default_certificate_id = 7
+    await env.f.settings.save(s)
+    app_id = await env.installed(proxy=ProxySettings(subdomain="notes"))
+    [host] = env.f.proxy.hosts.values()
+    assert env.f.proxy.settings[host.id].certificate_id == 7
+    stored = await env.f.apps.get(app_id)
+    assert stored.proxy.certificate_id is None  # the app keeps following the default
+
+
+async def test_ssl_not_forced_without_certificate(env: Env) -> None:
+    await env.configure_npm()
+    await env.installed(proxy=ProxySettings(subdomain="notes", ssl_forced=True))
+    [host] = env.f.proxy.hosts.values()
+    assert env.f.proxy.settings[host.id].ssl_forced is False

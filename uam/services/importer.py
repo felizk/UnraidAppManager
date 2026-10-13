@@ -540,7 +540,22 @@ class DefaultImporter:
                     f"NPM host {host.domain_names[0] if host.domain_names else host.id} forwards to port "
                     f"{host.forward_port}, which is not the WebUI port ({host_port or container_port})"
                 )
-        return ProxySettings(subdomain=subdomain), adopt_id
+        return self._proxy_settings_for(subdomain, host, ctx), adopt_id
+
+    @staticmethod
+    def _proxy_settings_for(subdomain: str | None, host: ProxyHost | None, ctx: _Context) -> ProxySettings:
+        """Keep the matched host's TLS/websocket/access settings; fall back to the default certificate."""
+        if host is not None:
+            cert = host.certificate_id or ctx.settings.default_certificate_id
+            return ProxySettings(
+                subdomain=subdomain,
+                certificate_id=cert,
+                ssl_forced=host.ssl_forced if host.certificate_id else cert is not None,
+                websockets=host.websockets,
+                access_list_id=host.access_list_id,
+            )
+        cert = ctx.settings.default_certificate_id
+        return ProxySettings(subdomain=subdomain, certificate_id=cert, ssl_forced=cert is not None)
 
     @staticmethod
     def _tag_override(template: UnraidTemplate, info: ContainerInfo, warnings: list[str]) -> str | None:
