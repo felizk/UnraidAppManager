@@ -56,3 +56,8 @@ pre.logs, pre.diff { max-height: 24rem; overflow: auto; font-size: 0.8rem; paddi
   :root:not([data-theme="light"]) .dropped li, :root:not([data-theme="light"]) .dropped strong { color: #ffb4ab; }
   :root:not([data-theme="light"]) .flash.ok { background: #14301a; color: #a5d6a7; }
 }
+
+/* Inline row editing (credentials, sources) */
+tr.editing input, tr.editing select { margin-bottom: 0; padding-top: .3rem; padding-bottom: .3rem; }
+/* The per-source templates row stays invisible until "Discover templates" fills it. */
+tr.templates-row > td { padding: 0; border-bottom: none; }

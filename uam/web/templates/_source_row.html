@@ -1,0 +1,12 @@
+<tr id="source-{{ s.id }}">
+  <td>{{ s.owner }}/{{ s.repo }}</td>
+  <td>{{ s.ref }}</td>
+  <td>{{ s.template_path or 'auto-discover' }}</td>
+  <td>{{ credential_names.get(s.credential_id, 'public') if s.credential_id else 'public' }}</td>
+  <td class="row-actions">
+    <button class="sm outline" hx-get="/sources/{{ s.id }}/edit" hx-target="#source-{{ s.id }}" hx-swap="outerHTML">Edit</button>
+    <button class="sm outline" hx-get="/sources/{{ s.id }}/templates" hx-target="#templates-{{ s.id }}" hx-swap="innerHTML">Discover templates</button>
+    <button class="sm secondary outline" hx-delete="/sources/{{ s.id }}" hx-target="#source-{{ s.id }}" hx-swap="delete"
+            hx-confirm="Delete source {{ s.owner }}/{{ s.repo }}?">Delete</button>
+  </td>
+</tr>

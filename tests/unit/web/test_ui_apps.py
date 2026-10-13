@@ -475,13 +475,16 @@ async def test_sources_edit_changes_credential(env: UiEnv) -> None:
     src = await env.seed_source()
     cred = await env.fakes.vault.store("gh", CredentialKind.GITHUB_PAT, "me", "tok")
     page = await env.client.get("/sources")
-    assert f'hx-post="/sources/{src.id}/update"' in page.text
+    assert f'hx-get="/sources/{src.id}/edit"' in page.text and 'name="ref" value' not in page.text
+    edit = await env.client.get(f"/sources/{src.id}/edit", headers=HX)
+    assert 'class="editing"' in edit.text and f'<option value="{cred.id}"' in edit.text
     r = await env.client.post(
         f"/sources/{src.id}/update",
         data={"ref": "dev", "template_path": "", "credential_id": str(cred.id)},
         headers=HX,
     )
-    assert r.headers["hx-redirect"] == "/sources"
+    assert r.text.lstrip().startswith(f'<tr id="source-{src.id}">') and ">gh<" in r.text and ">dev<" in r.text
     stored = await env.fakes.sources.get(src.id)
     assert (stored.ref, stored.template_path, stored.credential_id) == ("dev", None, cred.id)
-    assert ">gh<" in (await env.client.get("/sources")).text
+    cancel = await env.client.get(f"/sources/{src.id}/row", headers=HX)
+    assert "editing" not in cancel.text

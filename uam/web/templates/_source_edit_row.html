@@ -1,0 +1,17 @@
+<tr id="source-{{ s.id }}" class="editing">
+  <td>{{ s.owner }}/{{ s.repo }}</td>
+  <td><input type="text" name="ref" value="{{ s.ref }}" required aria-label="Branch"></td>
+  <td><input type="text" name="template_path" value="{{ s.template_path or '' }}" aria-label="Template path"
+             placeholder="auto-discover"></td>
+  <td>
+    <select name="credential_id" aria-label="Credential">
+      <option value="">(public repository)</option>
+      {% for c in credentials %}<option value="{{ c.id }}" {% if c.id == s.credential_id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+    </select>
+  </td>
+  <td class="row-actions">
+    <button class="sm" hx-post="/sources/{{ s.id }}/update" hx-include="#source-{{ s.id }}"
+            hx-target="#source-{{ s.id }}" hx-swap="outerHTML">Save</button>
+    <button class="sm secondary outline" hx-get="/sources/{{ s.id }}/row" hx-target="#source-{{ s.id }}" hx-swap="outerHTML">Cancel</button>
+  </td>
+</tr>

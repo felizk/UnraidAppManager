@@ -220,16 +220,23 @@ async def test_diff_helper_colours_and_escapes() -> None:
 async def test_credentials_edit_replaces_secret_and_username(env: UiEnv) -> None:
     cred = await env.fakes.vault.store("gh", CredentialKind.GITHUB_PAT, "me", "old-token")
     page = await env.client.get("/credentials")
-    assert f'hx-post="/credentials/{cred.id}/update"' in page.text
+    assert f'hx-get="/credentials/{cred.id}/edit"' in page.text
+    assert 'name="secret" autocomplete="new-password"' in page.text  # only the add form's field
+    assert page.text.count('name="secret"') == 1
+    edit = await env.client.get(f"/credentials/{cred.id}/edit", headers=HX)
+    assert 'class="editing"' in edit.text and 'value="me"' in edit.text and "old-token" not in edit.text
+    assert f'hx-get="/credentials/{cred.id}/row"' in edit.text  # Cancel
     r = await env.client.post(
         f"/credentials/{cred.id}/update", data={"username": "me2", "secret": "new-token"}, headers=HX
     )
-    assert "Updated username and secret of gh" in r.text and "new-token" not in r.text
-    assert await env.fakes.vault.reveal(cred.id) == "new-token"
+    assert r.text.lstrip().startswith(f'<tr id="cred-{cred.id}">') and "Updated username and secret" in r.text
+    assert "new-token" not in r.text and await env.fakes.vault.reveal(cred.id) == "new-token"
     r = await env.client.post(
         f"/credentials/{cred.id}/update", data={"username": "me2", "secret": ""}, headers=HX
     )
-    assert "Nothing to change" in r.text and await env.fakes.vault.reveal(cred.id) == "new-token"
+    assert "No changes" in r.text and await env.fakes.vault.reveal(cred.id) == "new-token"
+    cancel = await env.client.get(f"/credentials/{cred.id}/row", headers=HX)
+    assert "editing" not in cancel.text and "me2" in cancel.text
 
 
 async def test_credentials_test_flags_missing_scopes_and_username(env: UiEnv) -> None:

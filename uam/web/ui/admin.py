@@ -81,23 +81,33 @@ async def add_credential(request: Request, services: Services) -> Response:
     return await _credentials_page(request, services)
 
 
+@router.get("/credentials/{credential_id}/row")
+async def credential_row(credential_id: int, request: Request, services: Services) -> Response:
+    """The plain table row (used by Cancel)."""
+    return render(request, "_credential_row.html", c=await services.vault.get(credential_id))
+
+
+@router.get("/credentials/{credential_id}/edit")
+async def credential_edit_row(credential_id: int, request: Request, services: Services) -> Response:
+    """The row as inline inputs (username and a write-only new secret)."""
+    return render(request, "_credential_edit_row.html", c=await services.vault.get(credential_id))
+
+
 @router.post("/credentials/{credential_id}/update")
 async def update_credential(credential_id: int, request: Request, services: Services) -> Response:
-    """Replace a credential's username and/or secret; blank fields keep their value."""
+    """Replace a credential's username and/or secret; blank fields keep their value. Returns the row."""
     cred = await services.vault.get(credential_id)
     form = await request.form()
     username, secret = form_value(form, "username").strip(), form_value(form, "secret")
+    changed = []
     if username and username != cred.username:
         await services.vault.update_username(credential_id, username)
+        changed.append("username")
     if secret:
         await services.vault.update_secret(credential_id, secret)
-    changed = [
-        what
-        for what, new in (("username", username != cred.username and username), ("secret", secret))
-        if new
-    ]
-    notice = f"Updated {' and '.join(changed)} of {cred.name}." if changed else "Nothing to change."
-    return await _credentials_page(request, services, notice=notice)
+        changed.append("secret")
+    note = f"Updated {' and '.join(changed)}" if changed else "No changes"
+    return render(request, "_credential_row.html", c=await services.vault.get(credential_id), note=note)
 
 
 @router.delete("/credentials/{credential_id}")

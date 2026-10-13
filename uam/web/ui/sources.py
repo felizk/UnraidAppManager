@@ -72,9 +72,34 @@ async def add_source(request: Request, services: Services) -> Response:
     return redirect(request, "/sources")
 
 
+async def _source_row(request: Request, services: ApiServices, source: Source, template: str) -> Response:
+    creds = await services.vault.list()
+    return render(
+        request,
+        template,
+        s=source,
+        credentials=[c for c in creds if c.kind == CredentialKind.GITHUB_PAT],
+        credential_names={c.id: c.name for c in creds},
+    )
+
+
+@router.get("/sources/{source_id}/row")
+async def source_row(source_id: int, request: Request, services: Services) -> Response:
+    """The plain table row (used by Cancel)."""
+    return await _source_row(request, services, await services.sources.get(source_id), "_source_row.html")
+
+
+@router.get("/sources/{source_id}/edit")
+async def source_edit_row(source_id: int, request: Request, services: Services) -> Response:
+    """The row as inline inputs for branch, template path and credential."""
+    return await _source_row(
+        request, services, await services.sources.get(source_id), "_source_edit_row.html"
+    )
+
+
 @router.post("/sources/{source_id}/update")
 async def update_source(source_id: int, request: Request, services: Services) -> Response:
-    """Change a source's branch, template path or credential."""
+    """Change a source's branch, template path or credential; returns the updated row."""
     source = await services.sources.get(source_id)
     form = await request.form()
     credential_id = optional_int(form_value(form, "credential_id"), "credential")
@@ -90,7 +115,7 @@ async def update_source(source_id: int, request: Request, services: Services) ->
             credential_id,
         )
     )
-    return redirect(request, "/sources")
+    return await _source_row(request, services, await services.sources.get(source_id), "_source_row.html")
 
 
 @router.delete("/sources/{source_id}")
