@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Awaitable, Callable
+from dataclasses import replace
 from importlib.metadata import PackageNotFoundError, version
 from typing import Annotated, Any
 
@@ -30,6 +31,7 @@ from uam.web.api.schemas import (
     CredentialIn,
     CredentialOut,
     CredentialTestOut,
+    CredentialUpdateIn,
     DiscoveredTemplateOut,
     ExportApplyOut,
     ExportApplyRequest,
@@ -47,6 +49,7 @@ from uam.web.api.schemas import (
     SettingsModel,
     SourceIn,
     SourceOut,
+    SourceUpdateIn,
     TemplatePreviewOut,
     UpdateCheckOut,
 )
@@ -183,6 +186,19 @@ async def create_credential(
     return CredentialOut.from_domain(cred)
 
 
+@protected.patch("/credentials/{credential_id}", response_model=CredentialOut)
+async def update_credential(
+    credential_id: int, body: CredentialUpdateIn, services: Annotated[ApiServices, Depends(get_services)]
+) -> CredentialOut:
+    """Replace a credential's username and/or secret (e.g. after rotating a token)."""
+    await services.vault.get(credential_id)
+    if body.username is not None:
+        await services.vault.update_username(credential_id, body.username)
+    if body.secret is not None:
+        await services.vault.update_secret(credential_id, body.secret)
+    return CredentialOut.from_domain(await services.vault.get(credential_id))
+
+
 @protected.delete("/credentials/{credential_id}", status_code=204)
 async def delete_credential(
     credential_id: int, services: Annotated[ApiServices, Depends(get_services)]
@@ -229,6 +245,25 @@ async def create_source(body: SourceIn, services: Annotated[ApiServices, Depends
         Source(0, body.owner, body.repo, body.ref, body.template_path, body.credential_id)
     )
     return SourceOut.from_domain(source)
+
+
+@protected.patch("/sources/{source_id}", response_model=SourceOut)
+async def update_source(
+    source_id: int, body: SourceUpdateIn, services: Annotated[ApiServices, Depends(get_services)]
+) -> SourceOut:
+    """Change a source's branch, template path or credential."""
+    source = await services.sources.get(source_id)
+    sent = body.model_fields_set
+    if "credential_id" in sent and body.credential_id is not None:
+        await services.vault.get(body.credential_id)
+    source = replace(
+        source,
+        ref=body.ref if "ref" in sent and body.ref else source.ref,
+        template_path=(body.template_path or None) if "template_path" in sent else source.template_path,
+        credential_id=body.credential_id if "credential_id" in sent else source.credential_id,
+    )
+    await services.sources.update(source)
+    return SourceOut.from_domain(await services.sources.get(source_id))
 
 
 @protected.delete("/sources/{source_id}", status_code=204)

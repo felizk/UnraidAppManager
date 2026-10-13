@@ -188,6 +188,22 @@ class SqlSourceRepository:
                 raise ConflictError("unknown credential") from e
             return self._to_domain(row)
 
+    async def update(self, source: Source) -> None:
+        """Replace ref, template path and credential of an existing source."""
+        async with self._sf() as s:
+            row = await s.get(SourceRow, source.id)
+            if row is None:
+                raise NotFound(f"source {source.id}")
+            row.ref, row.template_path, row.credential_id = (
+                source.ref,
+                source.template_path,
+                source.credential_id,
+            )
+            try:
+                await s.commit()
+            except IntegrityError as e:
+                raise ConflictError("unknown credential") from e
+
     async def delete(self, source_id: int) -> None:
         """Delete the source; ConflictError while apps still use it."""
         async with self._sf() as s:

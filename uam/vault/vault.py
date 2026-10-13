@@ -90,6 +90,13 @@ class FernetVault:
             row.secret_ciphertext = self._fernet.encrypt(secret.encode())
             await session.commit()
 
+    async def update_username(self, credential_id: int, username: str) -> None:
+        """Replace the username (GitHub user, registry user or NPM e-mail)."""
+        async with self._sf() as session:
+            row = await self._row(session, credential_id)
+            row.username = username
+            await session.commit()
+
     async def reveal(self, credential_id: int) -> str:
         """Return the decrypted secret."""
         async with self._sf() as session:

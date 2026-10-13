@@ -215,3 +215,18 @@ async def test_diff_helper_colours_and_escapes() -> None:
     out = str(diff_html("--- a\n+++ b\n@@ -1 +1 @@\n-<old>\n+<new>\n ctx"))
     assert 'class="d-del">-&lt;old&gt;' in out and 'class="d-add">+&lt;new&gt;' in out
     assert 'class="d-hunk"' in out and 'class="d-meta"' in out
+
+
+async def test_credentials_edit_replaces_secret_and_username(env: UiEnv) -> None:
+    cred = await env.fakes.vault.store("gh", CredentialKind.GITHUB_PAT, "me", "old-token")
+    page = await env.client.get("/credentials")
+    assert f'hx-post="/credentials/{cred.id}/update"' in page.text
+    r = await env.client.post(
+        f"/credentials/{cred.id}/update", data={"username": "me2", "secret": "new-token"}, headers=HX
+    )
+    assert "Updated username and secret of gh" in r.text and "new-token" not in r.text
+    assert await env.fakes.vault.reveal(cred.id) == "new-token"
+    r = await env.client.post(
+        f"/credentials/{cred.id}/update", data={"username": "me2", "secret": ""}, headers=HX
+    )
+    assert "Nothing to change" in r.text and await env.fakes.vault.reveal(cred.id) == "new-token"

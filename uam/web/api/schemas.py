@@ -91,6 +91,13 @@ class CredentialIn(BaseModel):
     registry_host: str = ""
 
 
+class CredentialUpdateIn(BaseModel):
+    """Fields left out (or null) keep their current value."""
+
+    username: str | None = None
+    secret: str | None = Field(default=None, min_length=1, repr=False)
+
+
 class CredentialOut(BaseModel):
     """A credential without its secret."""
 
@@ -118,6 +125,14 @@ class SourceIn(BaseModel):
     owner: str = Field(min_length=1)
     repo: str = Field(min_length=1)
     ref: str = "main"
+    template_path: str | None = None
+    credential_id: int | None = None
+
+
+class SourceUpdateIn(BaseModel):
+    """Only the fields that are sent change; send `credential_id: null` to make the source public."""
+
+    ref: str | None = Field(default=None, min_length=1)
     template_path: str | None = None
     credential_id: int | None = None
 

@@ -29,20 +29,45 @@
 
 {% if sources %}
 <table>
-  <thead><tr><th>Repository</th><th>Branch</th><th>Path</th><th></th></tr></thead>
+  <thead><tr><th>Repository</th><th>Branch</th><th>Path</th><th>Credential</th><th></th></tr></thead>
   <tbody>
   {% for s in sources %}
   <tr id="source-{{ s.id }}">
     <td>{{ s.owner }}/{{ s.repo }}</td>
     <td>{{ s.ref }}</td>
     <td>{{ s.template_path or 'auto-discover' }}</td>
+    <td>{{ credential_names.get(s.credential_id, 'public') if s.credential_id else 'public' }}</td>
     <td class="row-actions">
       <button class="sm outline" hx-get="/sources/{{ s.id }}/templates" hx-target="#templates-{{ s.id }}" hx-swap="innerHTML" hx-disabled-elt="this">Discover templates</button>
       <button class="sm secondary outline" hx-delete="/sources/{{ s.id }}" hx-target="#source-{{ s.id }}" hx-swap="delete"
               hx-confirm="Delete source {{ s.owner }}/{{ s.repo }}?">Delete</button>
     </td>
   </tr>
-  <tr><td colspan="4"><div id="templates-{{ s.id }}"></div></td></tr>
+  <tr>
+    <td colspan="5">
+      <details>
+        <summary>Edit {{ s.owner }}/{{ s.repo }}</summary>
+        <form hx-post="/sources/{{ s.id }}/update">
+          <div class="grid">
+            <label>Branch
+              <input type="text" name="ref" value="{{ s.ref }}" required>
+            </label>
+            <label>Template path (blank = auto-discover)
+              <input type="text" name="template_path" value="{{ s.template_path or '' }}">
+            </label>
+            <label>Credential
+              <select name="credential_id">
+                <option value="">(public repository)</option>
+                {% for c in credentials %}<option value="{{ c.id }}" {% if c.id == s.credential_id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+              </select>
+            </label>
+          </div>
+          <button type="submit" class="sm" hx-disabled-elt="this">Save source</button>
+        </form>
+      </details>
+      <div id="templates-{{ s.id }}"></div>
+    </td>
+  </tr>
   {% endfor %}
   </tbody>
 </table>

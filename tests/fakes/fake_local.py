@@ -6,7 +6,7 @@ import itertools
 import re
 import xml.etree.ElementTree as ET  # noqa: S405 - only used to build XML, parsing goes through defusedxml
 from collections.abc import Callable, Sequence
-from dataclasses import fields
+from dataclasses import fields, replace
 
 from defusedxml import ElementTree as SafeET
 
@@ -135,6 +135,10 @@ class FakeVault:
     async def update_secret(self, credential_id: int, secret: str) -> None:
         cred, _ = self._get(credential_id)
         self.creds[credential_id] = (cred, secret)
+
+    async def update_username(self, credential_id: int, username: str) -> None:
+        cred, secret = self._get(credential_id)
+        self.creds[credential_id] = (replace(cred, username=username), secret)
 
     def _get(self, credential_id: int) -> tuple[Credential, str]:
         if credential_id not in self.creds:

@@ -492,6 +492,36 @@
         "title": "CredentialTestOut",
         "type": "object"
       },
+      "CredentialUpdateIn": {
+        "description": "Fields left out (or null) keep their current value.",
+        "properties": {
+          "secret": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Secret"
+          },
+          "username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username"
+          }
+        },
+        "title": "CredentialUpdateIn",
+        "type": "object"
+      },
       "DiscoveredTemplateOut": {
         "properties": {
           "commit_sha": {
@@ -1265,6 +1295,28 @@
       },
       "ProxyHost": {
         "properties": {
+          "access_list_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Access List Id"
+          },
+          "certificate_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Certificate Id"
+          },
           "domain_names": {
             "items": {
               "type": "string"
@@ -1287,6 +1339,16 @@
           "id": {
             "title": "Id",
             "type": "integer"
+          },
+          "ssl_forced": {
+            "default": false,
+            "title": "Ssl Forced",
+            "type": "boolean"
+          },
+          "websockets": {
+            "default": false,
+            "title": "Websockets",
+            "type": "boolean"
           }
         },
         "required": [
@@ -1696,6 +1758,47 @@
           "credential_id"
         ],
         "title": "SourceOut",
+        "type": "object"
+      },
+      "SourceUpdateIn": {
+        "description": "Only the fields that are sent change; send `credential_id: null` to make the source public.",
+        "properties": {
+          "credential_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credential Id"
+          },
+          "ref": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref"
+          },
+          "template_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Path"
+          }
+        },
+        "title": "SourceUpdateIn",
         "type": "object"
       },
       "TemplateConfig": {
@@ -2799,6 +2902,54 @@
           }
         },
         "summary": "Delete Credential"
+      },
+      "patch": {
+        "description": "Replace a credential's username and/or secret (e.g. after rotating a token).",
+        "operationId": "update_credential_api_credentials__credential_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "credential_id",
+            "required": true,
+            "schema": {
+              "title": "Credential Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialUpdateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CredentialOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Credential"
       }
     },
     "/api/credentials/{credential_id}/test": {
@@ -3318,6 +3469,54 @@
           }
         },
         "summary": "Delete Source"
+      },
+      "patch": {
+        "description": "Change a source's branch, template path or credential.",
+        "operationId": "update_source_api_sources__source_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source_id",
+            "required": true,
+            "schema": {
+              "title": "Source Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SourceUpdateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Source"
       }
     },
     "/api/sources/{source_id}/templates": {

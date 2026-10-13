@@ -467,3 +467,21 @@ async def test_multiline_events_render_as_pre(env: UiEnv) -> None:
     await env.fakes.events.record(app.id, "install.logs", "Last 100 log lines:\nboom", "error")
     r = await env.client.get(f"/fragments/apps/{app.id}/events")
     assert '<pre class="logs">Last 100 log lines:\nboom</pre>' in r.text
+
+
+async def test_sources_edit_changes_credential(env: UiEnv) -> None:
+    from uam.domain import CredentialKind
+
+    src = await env.seed_source()
+    cred = await env.fakes.vault.store("gh", CredentialKind.GITHUB_PAT, "me", "tok")
+    page = await env.client.get("/sources")
+    assert f'hx-post="/sources/{src.id}/update"' in page.text
+    r = await env.client.post(
+        f"/sources/{src.id}/update",
+        data={"ref": "dev", "template_path": "", "credential_id": str(cred.id)},
+        headers=HX,
+    )
+    assert r.headers["hx-redirect"] == "/sources"
+    stored = await env.fakes.sources.get(src.id)
+    assert (stored.ref, stored.template_path, stored.credential_id) == ("dev", None, cred.id)
+    assert ">gh<" in (await env.client.get("/sources")).text

@@ -32,6 +32,9 @@ async def test_round_trip_and_protocols(tmp_db: Database) -> None:
     assert "s3cret" not in repr(await vault.list())
     await vault.update_secret(cred.id, "new")
     assert await vault.reveal(cred.id) == "new"
+    await vault.update_username(cred.id, "someone-else")
+    assert (await vault.get(cred.id)).username == "someone-else"
+    assert await vault.reveal(cred.id) == "new"
     await vault.delete(cred.id)
     with pytest.raises(NotFound):
         await vault.get(cred.id)

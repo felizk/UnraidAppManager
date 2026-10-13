@@ -53,6 +53,7 @@ async def sources_page(request: Request, services: Services) -> Response:
         "sources.html",
         sources=await services.sources.list(),
         credentials=[c for c in await services.vault.list() if c.kind == CredentialKind.GITHUB_PAT],
+        credential_names={c.id: c.name for c in await services.vault.list()},
         active="sources",
     )
 
@@ -68,6 +69,27 @@ async def add_source(request: Request, services: Services) -> Response:
     if credential_id is not None:
         await services.vault.get(credential_id)
     await services.sources.add(Source(0, owner, repo, ref, path or None, credential_id))
+    return redirect(request, "/sources")
+
+
+@router.post("/sources/{source_id}/update")
+async def update_source(source_id: int, request: Request, services: Services) -> Response:
+    """Change a source's branch, template path or credential."""
+    source = await services.sources.get(source_id)
+    form = await request.form()
+    credential_id = optional_int(form_value(form, "credential_id"), "credential")
+    if credential_id is not None:
+        await services.vault.get(credential_id)
+    await services.sources.update(
+        Source(
+            source.id,
+            source.owner,
+            source.repo,
+            form_value(form, "ref").strip() or source.ref,
+            form_value(form, "template_path").strip() or None,
+            credential_id,
+        )
+    )
     return redirect(request, "/sources")
 
 

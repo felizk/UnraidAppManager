@@ -146,3 +146,14 @@ async def test_event_log(tmp_db):
     assert [e["message"] for e in recent] == ["done", "started"]
     assert recent[0]["level"] == "warning" and recent[0]["ts"].tzinfo is not None
     assert len(await log.recent(limit=2)) == 2
+
+
+async def test_source_update(repos):
+    sources, _, source = repos
+    await sources.update(replace(source, owner="ignored", ref="dev", template_path="unraid/x.xml"))
+    stored = await sources.get(source.id)
+    assert (stored.owner, stored.ref, stored.template_path) == ("felizk", "dev", "unraid/x.xml")
+    with pytest.raises(ConflictError):
+        await sources.update(replace(source, credential_id=999))
+    with pytest.raises(NotFound):
+        await sources.update(replace(source, id=999))

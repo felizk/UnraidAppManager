@@ -33,6 +33,7 @@ async def _credentials_page(
     services: ApiServices,
     *,
     error: str = "",
+    notice: str = "",
     values: dict[str, str] | None = None,
     status_code: int = 200,
 ) -> Response:
@@ -43,6 +44,7 @@ async def _credentials_page(
         credentials=await services.vault.list(),
         kinds=[k.value for k in CredentialKind],
         error=error,
+        notice=notice,
         values=values or {},
         active="credentials",
     )
@@ -77,6 +79,25 @@ async def add_credential(request: Request, services: Services) -> Response:
             request, services, error=error_text(exc), values=values, status_code=status_for(exc)
         )
     return await _credentials_page(request, services)
+
+
+@router.post("/credentials/{credential_id}/update")
+async def update_credential(credential_id: int, request: Request, services: Services) -> Response:
+    """Replace a credential's username and/or secret; blank fields keep their value."""
+    cred = await services.vault.get(credential_id)
+    form = await request.form()
+    username, secret = form_value(form, "username").strip(), form_value(form, "secret")
+    if username and username != cred.username:
+        await services.vault.update_username(credential_id, username)
+    if secret:
+        await services.vault.update_secret(credential_id, secret)
+    changed = [
+        what
+        for what, new in (("username", username != cred.username and username), ("secret", secret))
+        if new
+    ]
+    notice = f"Updated {' and '.join(changed)} of {cred.name}." if changed else "Nothing to change."
+    return await _credentials_page(request, services, notice=notice)
 
 
 @router.delete("/credentials/{credential_id}")

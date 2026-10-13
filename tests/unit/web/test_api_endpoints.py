@@ -494,3 +494,26 @@ async def test_openapi_lists_all_routes(env: ApiEnv) -> None:
         "/api/templates/export/plan",
     ):
         assert p in paths
+
+
+async def test_patch_credential_and_source(env: ApiEnv) -> None:
+    cred = (
+        await env.client.post(
+            "/api/credentials", json={"name": "gh", "kind": "github_pat", "username": "me", "secret": "old"}
+        )
+    ).json()
+    r = await env.client.patch(
+        f"/api/credentials/{cred['id']}", json={"secret": "rotated", "username": "you"}
+    )
+    assert r.status_code == 200 and r.json()["username"] == "you" and "rotated" not in r.text
+    assert await env.fakes.vault.reveal(cred["id"]) == "rotated"
+
+    src = (await env.client.post("/api/sources", json={"owner": "felizk", "repo": "notes"})).json()
+    r = await env.client.patch(f"/api/sources/{src['id']}", json={"credential_id": cred["id"], "ref": "dev"})
+    assert r.status_code == 200 and (r.json()["credential_id"], r.json()["ref"]) == (cred["id"], "dev")
+    r = await env.client.patch(f"/api/sources/{src['id']}", json={"credential_id": None})
+    assert r.json()["credential_id"] is None and r.json()["ref"] == "dev"
+    assert (
+        await env.client.patch(f"/api/sources/{src['id']}", json={"credential_id": 999})
+    ).status_code == 404
+    assert (await env.client.patch("/api/credentials/999", json={"secret": "x"})).status_code == 404
