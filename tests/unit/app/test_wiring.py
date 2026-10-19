@@ -18,6 +18,9 @@ def test_config_from_env(tmp_path):
     cfg = AppConfig.from_env({"UAM_DATA_DIR": str(tmp_path), "UAM_FAKES": "1", "UAM_SCHEDULER": "0"})
     assert cfg.fakes and not cfg.start_scheduler
     assert cfg.database_url == f"sqlite+aiosqlite:///{tmp_path / 'uam.sqlite3'}"
+    assert cfg.self_container is None and not cfg.self_auto_update
+    cfg = AppConfig.from_env({"UAM_SELF_CONTAINER": "uam", "UAM_SELF_AUTO_UPDATE": "1"})
+    assert cfg.self_container == "uam" and cfg.self_auto_update
 
 
 @pytest.mark.parametrize("fakes", [False, True])

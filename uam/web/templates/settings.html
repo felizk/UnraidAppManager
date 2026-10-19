@@ -9,6 +9,7 @@
 {% endmacro %}
 <h1>Settings</h1>
 {% if saved %}<article class="flash ok" role="status">Settings saved.</article>{% endif %}
+<div hx-get="/fragments/self" hx-trigger="load" hx-swap="outerHTML"><article id="self-update" aria-busy="true">Unraid App Manager</article></div>
 <form hx-post="/settings" hx-target="#main" hx-select="#main" hx-swap="outerHTML">
   {% if errors.get('_general') %}<p class="field-error" role="alert">{{ errors.get('_general') }}</p>{% endif %}
   <fieldset>

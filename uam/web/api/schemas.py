@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import asdict
 from datetime import datetime
 from typing import Any, Literal, Self
 
@@ -20,6 +21,7 @@ from uam.domain import (
     TemplateConfig,
     UnraidTemplate,
 )
+from uam.self_update.service import SelfStatus
 from uam.settings import Settings
 from uam.web.deps import ExportPlan
 
@@ -27,6 +29,31 @@ from uam.web.deps import ExportPlan
 class HealthOut(BaseModel):
     status: Literal["ok"] = "ok"
     version: str
+
+
+class SelfStatusOut(BaseModel):
+    """UAM's own container and whether a newer image is available."""
+
+    supported: bool
+    reason: str
+    container_name: str
+    image: str
+    version: str
+    image_version: str
+    revision: str
+    created: str
+    current_digest: str | None
+    latest_digest: str | None
+    checked_at: datetime | None
+    error: str
+    updating: bool
+    update_available: bool
+    last_result: dict[str, Any] | None
+
+    @classmethod
+    def from_status(cls, s: SelfStatus) -> SelfStatusOut:
+        """Copy every field (plus the computed `update_available`)."""
+        return cls(**{**asdict(s), "update_available": s.update_available})
 
 
 class AuthStatusOut(BaseModel):
