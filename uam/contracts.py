@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from datetime import datetime
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Literal, Protocol, runtime_checkable
 
 from uam.domain import (
     App,
@@ -281,3 +281,19 @@ class EventLog(Protocol):
     async def record(self, app_id: int | None, kind: str, message: str, level: str = "info") -> None: ...
 
     async def recent(self, app_id: int | None = None, limit: int = 100) -> list[dict[str, Any]]: ...
+
+
+NotifyTopic = Literal["update", "crash"]
+
+
+@runtime_checkable
+class Notifier(Protocol):
+    """Push notifications (Pushover). Off until a credential is chosen in Settings."""
+
+    async def notify(self, topic: NotifyTopic, title: str, message: str, priority: int = 0) -> None:
+        """Best effort: send when configured and `topic` is enabled. Never raises."""
+        ...
+
+    async def send_test(self, credential_id: int | None = None) -> None:
+        """Send a test message with `credential_id` (default: the saved one). Raises UamError on failure."""
+        ...

@@ -65,6 +65,9 @@ class SettingsModel(BaseModel):
     template_export_dir: str = Field(min_length=1)
     template_export_include_secrets: bool = True
     unraid_managed_label: str = Field(min_length=1)
+    pushover_credential_id: int | None = None
+    notify_on_update: bool = True
+    notify_on_crash: bool = True
 
     @model_validator(mode="after")
     def _range(self) -> Self:

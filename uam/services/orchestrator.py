@@ -7,13 +7,15 @@ import os
 import shutil
 from collections.abc import Awaitable, Callable
 from dataclasses import replace
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from uam.contracts import (
     AppRepository,
     DockerEngine,
     EventLog,
     GitHubClient,
+    Notifier,
+    NotifyTopic,
     PortAllocator,
     ProxyManager,
     SettingsStore,
@@ -40,12 +42,28 @@ from uam.settings import Settings
 OLD_SUFFIX = "__uam_old"
 _INSTALLABLE = {AppState.NOT_INSTALLED, AppState.FAILED}
 _OPERABLE = {AppState.RUNNING, AppState.STOPPED, AppState.FAILED_UPDATE}
+_SHOULD_RUN = {AppState.RUNNING, AppState.FAILED_UPDATE}
+CRASH_NOTIFY_COOLDOWN = timedelta(hours=1)
+CRASH_LOG_LINES = 5
 
 
 def _repo_of(image: str) -> str:
     """Image reference without tag or digest."""
     ref = image.split("@", 1)[0]
     return ref[: ref.rfind(":")] if ref.rfind(":") > ref.rfind("/") else ref
+
+
+def short_digest(digest: str) -> str:
+    """`sha256:0123456789ab` → `0123456789ab` (also accepts a full `repo@sha256:...` reference)."""
+    return digest.rsplit("@", 1)[-1].removeprefix("sha256:")[:12]
+
+
+def _crashed(info: ContainerInfo) -> bool:
+    """A stopped container that failed: restarting, dead, or exited with a non-zero code.
+
+    A clean exit (code 0) is treated as a stop from outside UAM, such as the Unraid Docker tab.
+    """
+    return info.state in ("restarting", "dead") or info.exit_code not in (None, 0)
 
 
 def pinned_ref(image: str, digest: str) -> str:
@@ -71,6 +89,7 @@ class Orchestrator:
         events: EventLog,
         clock: Callable[[], datetime],
         locks: AppLocks | None = None,
+        notifier: Notifier | None = None,
     ) -> None:
         self._apps = apps
         self._sources = sources
@@ -85,11 +104,18 @@ class Orchestrator:
         self._events = events
         self._clock = clock
         self.locks = locks or AppLocks()
+        self._notifier = notifier
+        self._restarts: dict[int, tuple[str, int]] = {}
+        self._crash_noticed: dict[int, datetime] = {}
 
     # ------------------------------------------------------------------ helpers
 
     async def _event(self, app_id: int | None, kind: str, message: str, level: str = "info") -> None:
         await self._events.record(app_id, kind, message, level)
+
+    async def _notify(self, topic: NotifyTopic, title: str, message: str) -> None:
+        if self._notifier is not None:
+            await self._notifier.notify(topic, title, message)
 
     async def _fetch(self, app: App, at_commit: str | None = None) -> tuple[UnraidTemplate, str]:
         """Fetch and parse the app's template at the source head, or at `at_commit` when given.
@@ -441,9 +467,16 @@ class Orchestrator:
             app.last_error = f"{stage}: {exc}"
             await self._apps.save(app)
             await self._event(app.id, f"{op}.failed", f"{stage} failed, rolled back: {exc}", "error")
+            if op == "update":
+                await self._notify(
+                    "update",
+                    f"{app.name} update failed",
+                    redact(f"The {stage} step failed and the previous version was restored: {exc}"),
+                )
             raise DeployError(stage, exc) from exc
 
         previous_proxy = app.proxy
+        changes = self._describe_update(app, commit, digest)
         app.overrides = candidate.overrides
         app.proxy = candidate.proxy
         app.image_tag_override = candidate.image_tag_override
@@ -462,7 +495,23 @@ class Orchestrator:
         await self._apply_proxy(app, resolved, previous_proxy)
         await self._apps.save(app)
         await self._event(app.id, f"{op}.done", f"{app.name} is running")
+        if op == "update":
+            await self._notify("update", f"{app.name} updated", changes)
         return app
+
+    @staticmethod
+    def _describe_update(app: App, commit: str, digest: str) -> str:
+        """What a finished update changed, for the notification."""
+        parts = []
+        old_digest = app.installed_image_digest
+        if old_digest is None or short_digest(old_digest) != short_digest(digest):
+            old = f"{short_digest(old_digest)} -> " if old_digest else ""
+            parts.append(f"image {old}{short_digest(digest)}")
+        if app.installed_template_commit != commit:
+            old = f"{app.installed_template_commit[:7]} -> " if app.installed_template_commit else ""
+            parts.append(f"template {old}{commit[:7]}")
+        what = "; ".join(parts) if parts else "redeployed with no changes"
+        return f"{app.name} is running again ({what})."
 
     async def _rollback(
         self, app: App, op: str, old: ContainerInfo | None, renamed: bool, new_id: str | None
@@ -515,6 +564,8 @@ class Orchestrator:
             if delete_appdata:
                 await self._delete_appdata(app, mount_paths)
             await self._apps.delete(app.id)
+            self._restarts.pop(app.id, None)
+            self._crash_noticed.pop(app.id, None)
             await self._event(app.id, "uninstall.done", f"{app.name} removed")
 
     async def _delete_appdata(self, app: App, paths: list[str]) -> None:
@@ -582,22 +633,70 @@ class Orchestrator:
     # ------------------------------------------------------------------ sync
 
     async def sync_state(self) -> None:
-        """Reconcile stored app state with Docker (missing, stopped or running containers)."""
+        """Reconcile stored app state with Docker (missing, stopped or running containers).
+
+        Also spots crashes: a running app whose container failed, or whose container Docker
+        restarted on its own (its restart count went up). Crashes are logged and notified.
+        """
         for app in await self._apps.list():
             if app.state not in _OPERABLE or self.locks.locked(app.id):
                 continue
             info = await self._find_container(app)
             before = (app.state, app.container_id, app.last_error)
             if info is None:
+                self._restarts.pop(app.id, None)
                 app.state = AppState.FAILED
                 app.container_id = None
                 app.last_error = "container missing"
                 await self._event(app.id, "sync.missing", f"container for {app.name} is gone", "warning")
+                await self._notify(
+                    "crash", f"{app.name} container is missing", f"The container for {app.name} is gone."
+                )
             else:
                 app.container_id = info.id
+                restarted = self._restarted(app.id, info) and app.state in _SHOULD_RUN
                 if info.state == "running" and app.state == AppState.STOPPED:
                     app.state = AppState.RUNNING
                 elif info.state != "running" and app.state == AppState.RUNNING:
                     app.state = AppState.STOPPED
+                    if _crashed(info):
+                        await self._crash(app, info, self._stop_reason(info))
+                    else:
+                        await self._event(app.id, "sync.stopped", f"{app.name} was stopped outside UAM")
+                    restarted = False
+                if restarted:
+                    await self._crash(
+                        app, info, f"crashed and was restarted by Docker (restart #{info.restart_count})"
+                    )
             if before != (app.state, app.container_id, app.last_error):
                 await self._apps.save(app)
+
+    def _restarted(self, app_id: int, info: ContainerInfo) -> bool:
+        """True when Docker restarted the same container since the last sync."""
+        previous = self._restarts.get(app_id)
+        self._restarts[app_id] = (info.id, info.restart_count)
+        return previous is not None and previous[0] == info.id and info.restart_count > previous[1]
+
+    @staticmethod
+    def _stop_reason(info: ContainerInfo) -> str:
+        if info.state == "restarting":
+            return "keeps crashing (Docker is restarting it)"
+        code = f" with exit code {info.exit_code}" if info.exit_code is not None else ""
+        return f"stopped unexpectedly{code}"
+
+    async def _crash(self, app: App, info: ContainerInfo, reason: str) -> None:
+        """Record a crash and notify, at most once per `CRASH_NOTIFY_COOLDOWN` for each app."""
+        await self._event(app.id, "sync.crashed", f"{app.name} {reason}", "error")
+        now = self._clock()
+        last = self._crash_noticed.get(app.id)
+        if last is not None and now - last < CRASH_NOTIFY_COOLDOWN:
+            return
+        self._crash_noticed[app.id] = now
+        message = f"{app.name} {reason}."
+        try:
+            tail = (await self._docker.logs(info.id, CRASH_LOG_LINES)).strip()
+        except Exception:
+            tail = ""
+        if tail:
+            message += f"\n\nLast log lines:\n{redact(tail)}"
+        await self._notify("crash", f"{app.name} crashed", message)

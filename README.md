@@ -51,6 +51,13 @@ the template rules, the publish workflow, `uam-lint`, and a starter kit for peop
   the NPM URL (for example `http://192.168.1.10:81`), base domain and default certificate in Settings.
   UAM only changes proxy hosts it created, or ones you explicitly take over during an import.
   It marks them with a `# managed-by: unraid-app-manager` line in the advanced config.
+- **Pushover notifications.** Add a `pushover` credential with your Pushover user key as the
+  username and an application API token (create one at pushover.net) as the secret, then pick it
+  under *Notifications* in Settings and use *Send test notification*. UAM then notifies you when an
+  app is updated (or an update fails and is rolled back) and when an app crashes: its container
+  exits with an error, Docker restarts it on its own, or the container disappears. A clean stop from
+  outside UAM (exit code 0) isn't treated as a crash, and crash messages for one app are sent at most
+  once an hour. Crashes are spotted by the state check that runs every minute.
 
 Secrets are encrypted at rest with the key in `/data/secret.key`. **Back that file up**: without
 it the stored credentials can't be decrypted.

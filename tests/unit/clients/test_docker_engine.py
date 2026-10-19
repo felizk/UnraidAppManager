@@ -287,6 +287,20 @@ async def test_inspect_missing_returns_none_and_no_healthcheck() -> None:
     assert info is not None and info.health is None and info.image_digest is None
 
 
+async def test_inspect_reports_exit_code_and_restart_count() -> None:
+    client = MagicMock()
+    client.images.get.return_value.attrs = image_attrs()
+    client.containers.get.return_value.attrs = container_attrs(
+        State={"Status": "exited", "ExitCode": 137}, RestartCount=3
+    )
+    info = await make_engine(client).inspect("web")
+    assert info is not None and (info.exit_code, info.restart_count) == (137, 3)
+
+    client.containers.get.return_value.attrs = container_attrs(State={"Status": "running", "ExitCode": 0})
+    info = await make_engine(client).inspect("web")
+    assert info is not None and (info.exit_code, info.restart_count) == (None, 0)
+
+
 async def test_list_containers_basic_fields() -> None:
     client = MagicMock()
     c1, c2 = MagicMock(), MagicMock()
