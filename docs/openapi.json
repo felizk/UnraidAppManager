@@ -1479,6 +1479,120 @@
         "title": "ProxySettings",
         "type": "object"
       },
+      "SelfStatusOut": {
+        "description": "UAM's own container and whether a newer image is available.",
+        "properties": {
+          "checked_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checked At"
+          },
+          "container_name": {
+            "title": "Container Name",
+            "type": "string"
+          },
+          "created": {
+            "title": "Created",
+            "type": "string"
+          },
+          "current_digest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Digest"
+          },
+          "error": {
+            "title": "Error",
+            "type": "string"
+          },
+          "image": {
+            "title": "Image",
+            "type": "string"
+          },
+          "image_version": {
+            "title": "Image Version",
+            "type": "string"
+          },
+          "last_result": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Result"
+          },
+          "latest_digest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Digest"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "string"
+          },
+          "supported": {
+            "title": "Supported",
+            "type": "boolean"
+          },
+          "update_available": {
+            "title": "Update Available",
+            "type": "boolean"
+          },
+          "updating": {
+            "title": "Updating",
+            "type": "boolean"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "supported",
+          "reason",
+          "container_name",
+          "image",
+          "version",
+          "image_version",
+          "revision",
+          "created",
+          "current_digest",
+          "latest_digest",
+          "checked_at",
+          "error",
+          "updating",
+          "update_available",
+          "last_result"
+        ],
+        "title": "SelfStatusOut",
+        "type": "object"
+      },
       "SettingsModel": {
         "additionalProperties": false,
         "properties": {
@@ -3303,6 +3417,63 @@
           }
         },
         "summary": "Get Ports"
+      }
+    },
+    "/api/self": {
+      "get": {
+        "description": "UAM's own container, its image, and the result of the last update check.",
+        "operationId": "self_status_api_self_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SelfStatusOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Self Status"
+      }
+    },
+    "/api/self/check": {
+      "post": {
+        "description": "Ask the registry whether a newer UAM image exists.",
+        "operationId": "self_check_api_self_check_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SelfStatusOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Self Check"
+      }
+    },
+    "/api/self/update": {
+      "post": {
+        "description": "Pull the newest UAM image and restart UAM on it (UAM is unavailable for a minute or so).",
+        "operationId": "self_update_api_self_update_post",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Self Update"
       }
     },
     "/api/settings": {
