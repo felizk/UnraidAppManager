@@ -3,7 +3,7 @@
 {%- endmacro %}
 
 {% macro icon(v) -%}
-{% if v.icon %}<img class="app-icon" src="{{ v.icon }}" alt="" loading="lazy" width="40" height="40">
+{% if v.icon %}<img class="app-icon" src="{{ v.icon }}" alt="" loading="lazy" width="40" height="40" data-icon-fallback="{{ v.app.name[:1]|upper }}">
 {% else %}<span class="app-icon placeholder" aria-hidden="true">{{ v.app.name[:1]|upper }}</span>{% endif %}
 {%- endmacro %}
 
