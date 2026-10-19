@@ -249,3 +249,34 @@ async def test_credentials_test_flags_missing_scopes_and_username(env: UiEnv) ->
     assert "missing the scope(s) repo, read:packages" in r.text and "set the username" in r.text
     r = await env.client.post(f"/credentials/{good.id}/test", headers=HX)
     assert "test-result ok" in r.text and "ghp_good" not in r.text
+
+
+# ---------------------------------------------------------------- notifications
+async def test_settings_save_pushover(env: UiEnv) -> None:
+    cred = await env.fakes.vault.store("push", CredentialKind.PUSHOVER, "userkey", "apptoken")
+    page = await env.client.get("/settings")
+    assert "Notifications (Pushover)" in page.text and f'value="{cred.id}"' in page.text
+    r = await env.client.post(
+        "/settings",
+        data=_form(pushover_credential_id=str(cred.id), notify_on_update="1", notify_on_crash=""),
+        headers=HX,
+    )
+    assert r.status_code == 200 and "Settings saved" in r.text
+    s = await env.fakes.settings.get()
+    assert (s.pushover_credential_id, s.notify_on_update, s.notify_on_crash) == (cred.id, True, False)
+
+
+async def test_test_pushover_button(env: UiEnv) -> None:
+    r = await env.client.post("/settings/test-pushover", headers=HX)
+    assert "test-result ok" in r.text and env.fakes.notifier.tests == [None]
+    env.fakes.notifier.fail_test = RemoteError(400, "application token is invalid")
+    r = await env.client.post("/settings/test-pushover", headers=HX)
+    assert "test-result fail" in r.text and "token is invalid" in r.text
+    env.api.services.notifier = None
+    assert "not available" in (await env.client.post("/settings/test-pushover", headers=HX)).text
+
+
+async def test_credentials_test_pushover(env: UiEnv) -> None:
+    cred = await env.fakes.vault.store("push", CredentialKind.PUSHOVER, "userkey", "apptoken")
+    r = await env.client.post(f"/credentials/{cred.id}/test", headers=HX)
+    assert "test-result ok" in r.text and env.fakes.notifier.tests == [cred.id]

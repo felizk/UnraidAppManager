@@ -21,6 +21,7 @@ from uam.contracts import (
     GitHubClient,
     Importer,
     KeyValueStore,
+    Notifier,
     ProxyManager,
     SettingsStore,
     SourceRepository,
@@ -116,6 +117,7 @@ class ApiServices:
     api_token: str | None = None
     clock: Callable[[], datetime] = field(default=_utcnow)
     auth: AuthManager | None = None
+    notifier: Notifier | None = None
 
 
 REQUIRED_PAT_SCOPES = ("repo", "read:packages")

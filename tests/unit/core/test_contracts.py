@@ -37,6 +37,7 @@ FAKE_FOR = {
     "HttpCache": lambda b: b.http_cache,
     "Importer": lambda b: b.importer,
     "EventLog": lambda b: b.events,
+    "Notifier": lambda b: b.notifier,
 }
 
 

@@ -57,6 +57,7 @@ class CredentialKind(StrEnum):
     GITHUB_PAT = "github_pat"
     REGISTRY = "registry"
     NPM = "npm"
+    PUSHOVER = "pushover"
 
 
 @dataclass(frozen=True, slots=True)
@@ -221,6 +222,8 @@ class ContainerInfo:
     devices: tuple[str, ...] = ()
     network: str = "bridge"
     restart_policy: str = ""
+    restart_count: int = 0
+    exit_code: int | None = None
 
 
 @dataclass(frozen=True, slots=True)

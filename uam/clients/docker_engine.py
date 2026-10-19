@@ -255,6 +255,8 @@ class SdkDockerEngine:
             health=health,
             labels=dict(config.get("Labels") or {}),
             published_ports=_published_ports(attrs),
+            restart_count=int(attrs.get("RestartCount") or 0),
+            exit_code=_exit_code(state),
         )
         if not detailed:
             return base
@@ -280,6 +282,8 @@ class SdkDockerEngine:
             ),
             network=host_config.get("NetworkMode") or "bridge",
             restart_policy=_restart_string(host_config.get("RestartPolicy") or {}),
+            restart_count=base.restart_count,
+            exit_code=base.exit_code,
         )
 
     # ----- health -----
@@ -402,6 +406,14 @@ def _bind_mounts(attrs: dict[str, Any]) -> tuple[Mount, ...]:
             mode = f"{mode},{extra}"
         out.append(Mount(host_path=m["Source"], container_path=m["Destination"], mode=mode))
     return tuple(out)
+
+
+def _exit_code(state: dict[str, Any]) -> int | None:
+    """The last exit code of a container that is not running (None while it runs)."""
+    code = state.get("ExitCode")
+    if state.get("Status") == "running" or not isinstance(code, int):
+        return None
+    return code
 
 
 def _restart_string(policy: dict[str, Any]) -> str:

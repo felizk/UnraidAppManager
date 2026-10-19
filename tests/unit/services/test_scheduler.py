@@ -122,7 +122,7 @@ async def test_start_registers_jobs_and_shutdown(fakes: FakeBundle, frozen_now: 
         jobs = {j.id: j for j in sched._scheduler.get_jobs()}
         assert set(jobs) == {"tick", "sync_state"}
         assert jobs["tick"].trigger.interval == timedelta(seconds=60)
-        assert jobs["sync_state"].trigger.interval == timedelta(minutes=5)
+        assert jobs["sync_state"].trigger.interval == timedelta(minutes=1)
         assert jobs["tick"].max_instances == 1 and jobs["tick"].coalesce
     finally:
         sched.shutdown()

@@ -8,7 +8,7 @@ from tests.fakes.cipher import PlainCipher, XorCipher
 from tests.fakes.factories import make_app, make_source
 from tests.fakes.fake_docker import FakeDocker
 from tests.fakes.fake_local import FakeCodec, FakeImporter, FakePortAllocator, FakeSpecResolver, FakeVault
-from tests.fakes.fake_remote import FakeGitHub, FakeProxyManager, FakeRegistry
+from tests.fakes.fake_remote import FakeGitHub, FakeNotifier, FakeProxyManager, FakeRegistry
 from tests.fakes.memory_repos import (
     InMemoryAppRepository,
     InMemoryEventLog,
@@ -24,6 +24,7 @@ __all__ = [
     "FakeDocker",
     "FakeGitHub",
     "FakeImporter",
+    "FakeNotifier",
     "FakePortAllocator",
     "FakeProxyManager",
     "FakeRegistry",
@@ -59,6 +60,7 @@ class FakeBundle:
     codec: FakeCodec = field(default_factory=FakeCodec)
     ports: FakePortAllocator = field(default_factory=FakePortAllocator)
     importer: FakeImporter = field(default_factory=FakeImporter)
+    notifier: FakeNotifier = field(default_factory=FakeNotifier)
     sources: InMemorySourceRepository = field(init=False)
     spec_resolver: FakeSpecResolver = field(init=False)
 

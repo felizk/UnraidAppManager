@@ -26,6 +26,7 @@ from uam.errors import (
     DeployError,
     NotFound,
     RateLimited,
+    RemoteError,
     ValidationError,
 )
 
@@ -517,3 +518,16 @@ async def test_patch_credential_and_source(env: ApiEnv) -> None:
         await env.client.patch(f"/api/sources/{src['id']}", json={"credential_id": 999})
     ).status_code == 404
     assert (await env.client.patch("/api/credentials/999", json={"secret": "x"})).status_code == 404
+
+
+async def test_credential_test_pushover(env: ApiEnv) -> None:
+    cred = (
+        await env.client.post(
+            "/api/credentials", json={"name": "push", "kind": "pushover", "username": "u", "secret": "t"}
+        )
+    ).json()
+    r = (await env.client.post(f"/api/credentials/{cred['id']}/test")).json()
+    assert r["ok"] is True and env.fakes.notifier.tests == [cred["id"]]
+    env.fakes.notifier.fail_test = RemoteError(400, "bad token")
+    r = (await env.client.post(f"/api/credentials/{cred['id']}/test")).json()
+    assert r["ok"] is False and "bad token" in r["detail"]

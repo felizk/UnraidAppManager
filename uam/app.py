@@ -92,6 +92,7 @@ async def build_runtime(config: AppConfig) -> Runtime:
 
     from uam.clients.docker_engine import SdkDockerEngine
     from uam.clients.github import HttpGitHubClient
+    from uam.clients.pushover import PushoverNotifier
     from uam.clients.registry import HttpRegistryClient
     from uam.db import (
         SqlAppRepository,
@@ -141,6 +142,7 @@ async def build_runtime(config: AppConfig) -> Runtime:
         ports=ports,
         proxy=proxy,
         codec=XmlTemplateCodec(),
+        notifier=PushoverNotifier(settings, vault, http),
     )
     runtime.closers += [db.dispose, http.aclose, registry.aclose]
     return runtime
@@ -166,6 +168,7 @@ async def _build_fake_runtime(config: AppConfig) -> Runtime:
         ports=f.ports,
         proxy=f.proxy,
         codec=f.codec,
+        notifier=f.notifier,
     )
 
 
@@ -196,6 +199,7 @@ def _assemble(config: AppConfig, **c: object) -> Runtime:
         k["events"],
         clock,
         AppLocks(),
+        notifier=k["notifier"],
     )
     checker = UpdateChecker(
         k["apps"],
@@ -254,6 +258,7 @@ def _assemble(config: AppConfig, **c: object) -> Runtime:
         proxy=k["proxy"],
         api_token=config.api_token,
         clock=clock,
+        notifier=k["notifier"],
     )
     scheduler = UpdateScheduler(checker, k["apps"], orchestrator, clock) if config.start_scheduler else None
     return Runtime(services=services, scheduler=scheduler)

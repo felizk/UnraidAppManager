@@ -56,6 +56,26 @@
     </p>
   </fieldset>
   <fieldset>
+    <legend>Notifications (Pushover)</legend>
+    <label>Pushover credential
+      <select name="pushover_credential_id">
+        <option value="">(off)</option>
+        {% for c in pushover_credentials %}<option value="{{ c.id }}" {% if v.get('pushover_credential_id') == c.id|string %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+      </select>
+      {% if errors.get('pushover_credential_id') %}<small class="field-error">{{ errors.get('pushover_credential_id') }}</small>
+      {% else %}<small>Add a <em>pushover</em> credential first: your user key as the username, the application API token as the secret.</small>{% endif %}
+    </label>
+    <label><input type="checkbox" name="notify_on_update" value="1" {% if v.get('notify_on_update') %}checked{% endif %}>
+      Notify when an app is updated (or an update fails and is rolled back)</label>
+    <label><input type="checkbox" name="notify_on_crash" value="1" {% if v.get('notify_on_crash') %}checked{% endif %}>
+      Notify when an app crashes or its container disappears</label>
+    <p>
+      <button type="button" class="sm outline" hx-post="/settings/test-pushover" hx-target="#pushover-result" hx-swap="innerHTML" hx-disabled-elt="this">Send test notification</button>
+      <span id="pushover-result"></span>
+      <small>(uses the saved settings)</small>
+    </p>
+  </fieldset>
+  <fieldset>
     <legend>Update checks</legend>
     <div class="grid">
       {{ text('hot_window_hours', 'Hot window (hours)', 'Apps changed within this window are checked often', type='number') }}

@@ -424,7 +424,8 @@
         "enum": [
           "github_pat",
           "registry",
-          "npm"
+          "npm",
+          "pushover"
         ],
         "title": "CredentialKind",
         "type": "string"
@@ -1534,6 +1535,16 @@
             "title": "Hot Window Hours",
             "type": "integer"
           },
+          "notify_on_crash": {
+            "default": true,
+            "title": "Notify On Crash",
+            "type": "boolean"
+          },
+          "notify_on_update": {
+            "default": true,
+            "title": "Notify On Update",
+            "type": "boolean"
+          },
           "npm_credential_id": {
             "anyOf": [
               {
@@ -1567,6 +1578,17 @@
             "minimum": 1.0,
             "title": "Port Range Start",
             "type": "integer"
+          },
+          "pushover_credential_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pushover Credential Id"
           },
           "reserved_ports": {
             "items": {

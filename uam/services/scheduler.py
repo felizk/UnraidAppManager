@@ -17,7 +17,7 @@ from uam.services.update_checker import UpdateChecker
 log = logging.getLogger(__name__)
 
 TICK_SECONDS = 60
-SYNC_MINUTES = 5
+SYNC_MINUTES = 1
 CONCURRENCY = 4
 
 
@@ -28,7 +28,7 @@ class StateSyncer(Protocol):
 
 
 class UpdateScheduler:
-    """Runs `tick` every minute and `sync_state` every five minutes."""
+    """Runs `tick` and `sync_state` (which also spots crashed apps) every minute."""
 
     def __init__(
         self,
