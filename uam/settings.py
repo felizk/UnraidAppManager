@@ -23,6 +23,9 @@ class Settings:
     template_export_dir: str = "/unraid-templates"
     template_export_include_secrets: bool = True
     unraid_managed_label: str = "uam"
+    pushover_credential_id: int | None = None
+    notify_on_update: bool = True
+    notify_on_crash: bool = True
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize to a JSON-compatible dict."""

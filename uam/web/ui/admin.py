@@ -133,6 +133,8 @@ async def test_credential(credential_id: int, request: Request, services: Servic
             else:
                 await services.proxy.list_certificates()
                 detail = "logged in to Nginx Proxy Manager"
+        elif cred.kind == CredentialKind.PUSHOVER:
+            ok, detail = await _pushover_test(services, credential_id)
     except UamError as exc:
         ok, detail = False, redact(str(exc))
     return render(request, "_test_result.html", ok=ok, detail=detail)
@@ -148,7 +150,8 @@ _INT_FIELDS = (
     "hot_interval_minutes",
     "cold_interval_hours",
 )
-_OPTIONAL_INT = ("npm_credential_id", "default_certificate_id")
+_OPTIONAL_INT = ("npm_credential_id", "default_certificate_id", "pushover_credential_id")
+_BOOL_FIELDS = ("template_export_include_secrets", "notify_on_update", "notify_on_crash")
 
 
 def _settings_values(s: Settings) -> dict[str, str]:
@@ -178,6 +181,7 @@ async def _settings_page(
             certs = await services.proxy.list_certificates()
         except UamError:
             certs = []
+    creds = await services.vault.list()
     return render(
         request,
         "settings.html",
@@ -186,7 +190,8 @@ async def _settings_page(
         errors=errors,
         saved=saved,
         certs=certs,
-        npm_credentials=[c for c in await services.vault.list() if c.kind == CredentialKind.NPM],
+        npm_credentials=[c for c in creds if c.kind == CredentialKind.NPM],
+        pushover_credentials=[c for c in creds if c.kind == CredentialKind.PUSHOVER],
         active="settings",
     )
 
@@ -201,7 +206,8 @@ def _collect_settings(form: Any) -> tuple[dict[str, Any], dict[str, str], dict[s
     """Convert the posted strings to typed values. Returns (data, raw values, errors)."""
     raw = {n: form_value(form, n) for n in (*_TEXT_FIELDS, *_OPTIONAL_TEXT, *_INT_FIELDS, *_OPTIONAL_INT)}
     raw["reserved_ports"] = form_value(form, "reserved_ports")
-    raw["template_export_include_secrets"] = "1" if form.get("template_export_include_secrets") else ""
+    for name in _BOOL_FIELDS:
+        raw[name] = "1" if form.get(name) else ""
     errors: dict[str, str] = {}
     data: dict[str, Any] = {}
     for name in _TEXT_FIELDS:
@@ -227,7 +233,8 @@ def _collect_settings(form: Any) -> tuple[dict[str, Any], dict[str, str], dict[s
             break
         ports.append(int(part))
     data["reserved_ports"] = ports
-    data["template_export_include_secrets"] = bool(raw["template_export_include_secrets"])
+    for name in _BOOL_FIELDS:
+        data[name] = bool(raw[name])
     return data, raw, errors
 
 
@@ -262,6 +269,24 @@ async def test_npm(request: Request, services: Services) -> Response:
     return render(
         request, "_test_result.html", ok=True, detail=f"connected; {len(certs)} certificate(s) available"
     )
+
+
+async def _pushover_test(services: ApiServices, credential_id: int | None) -> tuple[bool, str]:
+    """Send a test notification; returns (ok, detail)."""
+    if services.notifier is None:
+        return False, "notifications are not available in this mode"
+    try:
+        await services.notifier.send_test(credential_id)
+    except UamError as exc:
+        return False, redact(str(exc))
+    return True, "test notification sent; check your Pushover app"
+
+
+@router.post("/settings/test-pushover")
+async def test_pushover(request: Request, services: Services) -> Response:
+    """Send a test notification with the saved Pushover credential."""
+    ok, detail = await _pushover_test(services, None)
+    return render(request, "_test_result.html", ok=ok, detail=detail)
 
 
 # ---------------------------------------------------------------- export

@@ -1,4 +1,4 @@
-"""Fakes for GitHub, the image registry and Nginx Proxy Manager."""
+"""Fakes for GitHub, the image registry, Nginx Proxy Manager and Pushover."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ import itertools
 from dataclasses import replace
 from datetime import UTC, datetime
 
+from uam.contracts import NotifyTopic
 from uam.domain import DiscoveredTemplate, ProxyHost, ProxySettings, RegistryAuth, Source
 from uam.errors import AuthError, ConflictError, NotFound
 
@@ -188,3 +189,25 @@ class FakeProxyManager:
     def retarget(self, host_id: int, forward_port: int) -> None:
         """Test helper: change a host's port behind UAM's back."""
         self.hosts[host_id] = replace(self.hosts[host_id], forward_port=forward_port)
+
+
+class FakeNotifier:
+    """Records notifications in `sent` as (topic, title, message, priority).
+
+    Topics in `muted` are dropped, like a disabled setting. `fail_test` makes `send_test` raise.
+    """
+
+    def __init__(self) -> None:
+        self.sent: list[tuple[str, str, str, int]] = []
+        self.tests: list[int | None] = []
+        self.muted: set[str] = set()
+        self.fail_test: Exception | None = None
+
+    async def notify(self, topic: NotifyTopic, title: str, message: str, priority: int = 0) -> None:
+        if topic not in self.muted:
+            self.sent.append((topic, title, message, priority))
+
+    async def send_test(self, credential_id: int | None = None) -> None:
+        if self.fail_test is not None:
+            raise self.fail_test
+        self.tests.append(credential_id)

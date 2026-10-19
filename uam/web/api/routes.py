@@ -227,6 +227,11 @@ async def test_credential(
                 return CredentialTestOut(ok=False, detail="Nginx Proxy Manager is not configured")
             await services.proxy.list_certificates()
             return CredentialTestOut(ok=True, detail="logged in to Nginx Proxy Manager")
+        if cred.kind == CredentialKind.PUSHOVER:
+            if services.notifier is None:
+                return CredentialTestOut(ok=False, detail="notifications are not available in this mode")
+            await services.notifier.send_test(credential_id)
+            return CredentialTestOut(ok=True, detail="test notification sent")
     except UamError as exc:
         return CredentialTestOut(ok=False, detail=redact(str(exc)))
     return CredentialTestOut(ok=True, tested=False, detail="registry credentials are checked on first pull")

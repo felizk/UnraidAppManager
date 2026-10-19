@@ -21,7 +21,7 @@ container, registers a subdomain in Nginx Proxy Manager (NPM), and keeps it all 
 | F9 | App-repo guide and linter | [`docs/app-repo-guide.md`](docs/app-repo-guide.md) explains how to set up an app repo (for people and agents), with a drop-in kit in `docs/app-repo-kit/`. `uam-lint` (T17) enforces the guide's rules locally and in the app repo's CI. |
 
 Out of scope for v1 (stretch goals): GitHub webhooks for instant updates, Docker Compose
-apps, notifications (ntfy/Unraid notify), multi-user accounts, and registries other than
+apps, other notification services (ntfy/Unraid notify; Pushover is supported), multi-user accounts, and registries other than
 GHCR and Docker Hub (the design keeps this open).
 
 ## 2. Key decisions

@@ -173,6 +173,7 @@ def build_env(api_token: str | None = None, with_proxy: bool = True) -> ApiEnv:
         exporter=exporter,
         proxy=fakes.proxy if with_proxy else None,
         api_token=api_token,
+        notifier=fakes.notifier,
     )
     app = create_api_app(services)
     client = httpx.AsyncClient(
