@@ -79,6 +79,7 @@ async def test_card_shows_webui_link_from_container_label(env: UiEnv) -> None:
     r = await env.client.get(f"/fragments/apps/{app.id}/card")
     assert 'href="http://192.168.1.10:31000/"' in r.text
     assert 'src="http://x/icon.png"' in r.text
+    assert 'data-icon-fallback="N"' in r.text
 
 
 async def test_card_polls_fast_while_installing(env: UiEnv) -> None:
