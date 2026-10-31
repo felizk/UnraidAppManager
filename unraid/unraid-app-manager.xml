@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <Container version="2">
   <Name>unraid-app-manager</Name>
-  <Repository>ghcr.io/felizk/unraid-app-manager:latest</Repository>
-  <Registry>https://github.com/felizk/unraidappmanager/pkgs/container/unraid-app-manager</Registry>
+  <Repository>forgejo.felizk.net/felizk/unraid-app-manager:latest</Repository>
+  <Registry>https://forgejo.felizk.net/felizk/-/packages/container/unraid-app-manager</Registry>
   <Network>bridge</Network>
   <Privileged>false</Privileged>
   <Shell>sh</Shell>
