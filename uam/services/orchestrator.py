@@ -475,6 +475,8 @@ class Orchestrator:
                 )
             raise DeployError(stage, exc) from exc
 
+        if old is not None:
+            await self._remove_orphan_image(app.id, op, old.image_id, new_id)
         previous_proxy = app.proxy
         changes = self._describe_update(app, commit, digest)
         app.overrides = candidate.overrides
@@ -498,6 +500,24 @@ class Orchestrator:
         if op == "update":
             await self._notify("update", f"{app.name} updated", changes)
         return app
+
+    async def _remove_orphan_image(self, app_id: int, op: str, old_image_id: str, new_id: str | None) -> None:
+        """Delete the replaced container's image once nothing uses it, like Unraid does.
+
+        Best effort: Docker refuses (and we keep the image) while any other container uses it.
+        """
+        if not old_image_id or new_id is None:
+            return
+        try:
+            new = await self._docker.inspect(new_id)
+            if new is None or new.image_id == old_image_id:
+                return
+            if await self._docker.remove_image(old_image_id):
+                await self._event(
+                    app_id, f"{op}.cleanup_image", f"removed old image {short_digest(old_image_id)}"
+                )
+        except Exception as exc:
+            await self._event(app_id, f"{op}.cleanup_image", f"could not remove old image: {exc}", "warning")
 
     @staticmethod
     def _describe_update(app: App, commit: str, digest: str) -> str:

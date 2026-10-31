@@ -157,6 +157,20 @@ class SdkDockerEngine:
             raise DeployError("pull", f"no repo digest for {image_ref}")
         return digest
 
+    async def remove_image(self, image_id: str) -> bool:
+        """Delete an image by id without force; False if it is missing or still in use."""
+        return await asyncio.to_thread(self._remove_image, image_id)
+
+    def _remove_image(self, image_id: str) -> bool:
+        try:
+            self.client.images.remove(image_id, force=False)
+        except docker.errors.DockerException as exc:
+            err = _translate(exc, f"remove image {image_id}")
+            if isinstance(err, NotFound | ConflictError):
+                return False
+            raise err from exc
+        return True
+
     # ----- lifecycle -----
     async def create(self, spec: ContainerSpec) -> str:
         """Create (not start) a container and attach extra networks. Returns its id."""

@@ -321,6 +321,7 @@ class RegistryClient(Protocol):
 
 class DockerEngine(Protocol):
     async def pull(self, image_ref: str, auth: RegistryAuth | None) -> str: ...  # returns repo digest
+    async def remove_image(self, image_id: str) -> bool: ...  # no force; False if in use or missing
     async def create(self, spec: ContainerSpec) -> str: ...                      # container id
     async def start(self, container_id: str) -> None: ...
     async def stop(self, container_id: str, timeout: int = 20) -> None: ...

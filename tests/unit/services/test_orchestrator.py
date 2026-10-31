@@ -308,6 +308,52 @@ async def test_update_without_image_reuses_digest(env: Env) -> None:
     assert env.f.docker.pulls == []
 
 
+async def test_update_removes_orphaned_old_image(env: Env) -> None:
+    app_id = await env.installed()
+    env.f.docker.set_image(IMAGE, NEW)
+    await env.orch.update(app_id, True, True)
+    assert env.f.docker.removed_images == [env.f.docker.image_id_for(OLD)]
+    assert "update.cleanup_image" in env.f.events.kinds(app_id)
+    ops = [op for op, _ in env.f.docker.calls]
+    assert ops.index("remove") < ops.index("remove_image")
+
+
+async def test_update_keeps_image_when_unchanged(env: Env) -> None:
+    app_id = await env.installed()
+    await env.orch.update(app_id, True, True)
+    await env.orch.update(app_id, apply_template=True, apply_image=False)
+    assert env.f.docker.removed_images == []
+    assert ("remove_image", env.f.docker.image_id_for(OLD)) not in env.f.docker.calls
+
+
+async def test_update_keeps_old_image_used_by_another_container(env: Env) -> None:
+    app_id = await env.installed()
+    await env.installed(name="notes2")
+    env.f.docker.set_image(IMAGE, NEW)
+    await env.orch.update(app_id, True, True)
+    assert env.f.docker.removed_images == []
+    assert ("remove_image", env.f.docker.image_id_for(OLD)) in env.f.docker.calls
+
+
+async def test_update_image_cleanup_failure_is_only_a_warning(env: Env) -> None:
+    app_id = await env.installed()
+    env.f.docker.set_image(IMAGE, NEW)
+    env.f.docker.fail_next("remove_image")
+    app = await env.orch.update(app_id, True, True)
+    assert app.state == AppState.RUNNING and app.installed_image_digest == NEW
+    events = [e for e in env.f.events.events if e["kind"] == "update.cleanup_image"]
+    assert events and events[0]["level"] == "warning"
+
+
+async def test_failed_update_keeps_old_image(env: Env) -> None:
+    app_id = await env.installed()
+    env.f.docker.set_image(IMAGE, NEW)
+    env.f.docker.fail_next("health")
+    with pytest.raises(DeployError):
+        await env.orch.update(app_id, True, True)
+    assert "remove_image" not in [op for op, _ in env.f.docker.calls]
+
+
 async def test_update_npm_failure_does_not_roll_back(env: Env) -> None:
     await env.configure_npm()
     app_id = await env.installed(proxy=ProxySettings(subdomain="notes"))

@@ -65,6 +65,14 @@ class DockerEngine(Protocol):
         """Pull the image and return its repo digest."""
         ...
 
+    async def remove_image(self, image_id: str) -> bool:
+        """Remove an image without force (as Unraid does after an update).
+
+        Returns False when the image is gone already or Docker refuses because a container
+        still uses it.
+        """
+        ...
+
     async def create(self, spec: ContainerSpec) -> str:
         """Create a container and return its id."""
         ...

@@ -9,7 +9,7 @@ from dataclasses import replace
 from uam.domain import ContainerInfo, ContainerSpec, RegistryAuth
 from uam.errors import ConflictError, NotFound
 
-OPS = ("pull", "create", "start", "stop", "remove", "rename", "health")
+OPS = ("pull", "remove_image", "create", "start", "stop", "remove", "rename", "health")
 
 
 class FakeDocker:
@@ -19,6 +19,8 @@ class FakeDocker:
     * `fail_next(op, exc, times)` makes the next `times` calls of `op` raise (`health` returns False).
     * `unhealthy_images` holds image refs whose containers never become healthy.
     * `seed_container(info)` adds a container UAM did not create (e.g. for import tests).
+    * Created containers get `image_id` = `image_id_for(digest)`; `removed_images` records
+      successful `remove_image` calls (an image used by any container is refused).
     """
 
     def __init__(self, host_ip: str = "192.168.1.10") -> None:
@@ -28,6 +30,7 @@ class FakeDocker:
         self.unhealthy_images: set[str] = set()
         self.pulls: list[tuple[str, RegistryAuth | None]] = []
         self.calls: list[tuple[str, str]] = []
+        self.removed_images: list[str] = []
         self.log_text: dict[str, str] = {}
         self._failures: dict[str, list[BaseException | None]] = defaultdict(list)
         self._ids = itertools.count(1)
@@ -62,6 +65,11 @@ class FakeDocker:
             raise NotFound(f"container {container_id}")
         return info
 
+    @staticmethod
+    def image_id_for(digest: str | None) -> str:
+        """The fake local image id for a repo digest."""
+        return f"id-{digest}" if digest else ""
+
     def _digest_for(self, image_ref: str) -> str | None:
         if "@" in image_ref:
             return image_ref.split("@", 1)[1]
@@ -77,17 +85,29 @@ class FakeDocker:
         self.pulls.append((image_ref, auth))
         return digest
 
+    async def remove_image(self, image_id: str) -> bool:
+        self.calls.append(("remove_image", image_id))
+        self._raise_if_failing("remove_image")
+        if not image_id or image_id in self.removed_images:
+            return False
+        if any(c.image_id == image_id for c in self.containers.values()):
+            return False
+        self.removed_images.append(image_id)
+        return True
+
     async def create(self, spec: ContainerSpec) -> str:
         self.calls.append(("create", spec.name))
         self._raise_if_failing("create")
         if self.by_name(spec.name):
             raise ConflictError(f"container name {spec.name} in use")
         cid = f"{next(self._ids):064x}"
+        digest = self._digest_for(spec.image)
         self.containers[cid] = ContainerInfo(
             id=cid,
             name=spec.name,
             image=spec.image,
-            image_digest=self._digest_for(spec.image),
+            image_digest=digest,
+            image_id=self.image_id_for(digest),
             state="created",
             health=None,
             labels=dict(spec.labels),

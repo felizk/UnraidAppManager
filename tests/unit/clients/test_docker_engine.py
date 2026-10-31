@@ -11,7 +11,7 @@ import pytest
 
 from uam.clients.docker_engine import SdkDockerEngine, build_create_kwargs
 from uam.domain import ContainerSpec, Mount, PortBinding, RegistryAuth
-from uam.errors import AuthError, ConflictError, NotFound
+from uam.errors import AuthError, ConflictError, NotFound, RemoteError
 
 
 def api_error(status: int, msg: str = "boom") -> docker.errors.APIError:
@@ -72,6 +72,27 @@ async def test_pull_errors_are_translated() -> None:
     client.images.pull.side_effect = docker.errors.ImageNotFound("nope")
     with pytest.raises(NotFound):
         await make_engine(client).pull("x/y:1", None)
+
+
+# ---------- remove_image ----------
+async def test_remove_image_without_force() -> None:
+    client = MagicMock()
+    assert await make_engine(client).remove_image("sha256:old") is True
+    client.images.remove.assert_called_once_with("sha256:old", force=False)
+
+
+@pytest.mark.parametrize("exc", [api_error(409, "image is being used"), docker.errors.ImageNotFound("gone")])
+async def test_remove_image_in_use_or_missing_returns_false(exc: Exception) -> None:
+    client = MagicMock()
+    client.images.remove.side_effect = exc
+    assert await make_engine(client).remove_image("sha256:old") is False
+
+
+async def test_remove_image_other_errors_raise() -> None:
+    client = MagicMock()
+    client.images.remove.side_effect = api_error(500)
+    with pytest.raises(RemoteError):
+        await make_engine(client).remove_image("sha256:old")
 
 
 # ---------- create ----------
