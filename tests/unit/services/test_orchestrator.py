@@ -308,6 +308,20 @@ async def test_update_without_image_reuses_digest(env: Env) -> None:
     assert env.f.docker.pulls == []
 
 
+async def test_update_pulls_when_template_moves_image_to_another_registry(env: Env) -> None:
+    app_id = await env.installed()
+    moved = "forgejo.example.net/felizk/notes:latest"
+    xml = load_template("simple-web.xml").replace(IMAGE, moved)
+    env.f.github.put_file("felizk", "notes", "unraid/notes.xml", xml)
+    env.f.docker.set_image(moved, NEW)
+    env.f.docker.pulls.clear()
+    app = await env.orch.update(app_id, apply_template=True, apply_image=False)
+    assert [ref for ref, _ in env.f.docker.pulls] == [moved]
+    assert app.installed_image_digest == NEW
+    (container,) = env.f.docker.containers.values()
+    assert container.image == moved
+
+
 async def test_update_removes_orphaned_old_image(env: Env) -> None:
     app_id = await env.installed()
     env.f.docker.set_image(IMAGE, NEW)

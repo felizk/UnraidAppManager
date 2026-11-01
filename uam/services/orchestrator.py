@@ -427,8 +427,12 @@ class Orchestrator:
                 replace(candidate, installed_template_commit=commit), template
             )
             spec: ContainerSpec = await self._with_source_label(app, resolved.spec)
+            old = await self._find_container(app)
             pin = app.installed_image_digest
-            reuse = not pull_new_image and pin is not None
+            # A digest only exists under the repository it was pulled from. If the template
+            # now names another repository (say ghcr.io → a self-hosted registry), pull.
+            moved = old is not None and _repo_of(old.image) != _repo_of(spec.image)
+            reuse = not pull_new_image and pin is not None and not moved
             if reuse and pin is not None:
                 spec = replace(spec, image=pinned_ref(spec.image, pin))
                 digest = pin
@@ -438,7 +442,6 @@ class Orchestrator:
                 digest = await self._pull(app.id, op, spec.image)
 
             stage = "rename_old"
-            old = await self._find_container(app)
             if old is None and was_pending:
                 raise NotFound(f"container {app.container_id} no longer exists")
             if old is not None:
