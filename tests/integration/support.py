@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import ipaddress
+import os
 import socket
 import subprocess
 import tempfile
+import threading
 import time
 from collections.abc import Callable
 from pathlib import Path
@@ -19,6 +22,32 @@ BASE_DOMAIN = "uam.test"
 PORT_RANGE = (31000, 31099)
 OCI_SOURCE_LABEL = "org.opencontainers.image.source"
 SETTLED_EXCLUDED = {"installing", "updating", "removing", "not_installed"}
+
+# Where the test process reaches ports the Docker daemon publishes. On a CI runner whose job runs in
+# a container next to the daemon (Forgejo Actions), that is the host's bridge address, not loopback.
+HOST_IP = os.environ.get("UAM_TEST_DOCKER_HOST_IP", "").strip() or "127.0.0.1"
+# The host address the test infrastructure publishes its ports on (defaults to HOST_IP).
+BIND_IP = os.environ.get("UAM_TEST_BIND_IP", "").strip() or HOST_IP
+
+
+def is_loopback(ip: str) -> bool:
+    """True for `localhost` and 127.0.0.0/8."""
+    return ip == "localhost" or ipaddress.ip_address(ip).is_loopback
+
+
+def host_url(port: int) -> str:
+    """`http://<HOST_IP>:<port>`: how the test process reaches a port published by the daemon."""
+    return f"http://{HOST_IP}:{port}"
+
+
+def publish(port: int) -> Any:
+    """Host bindings for a test service: loopback (for the daemon itself) plus BIND_IP.
+
+    Typed `Any` because docker-py accepts a list of `(ip, port)` tuples but its stubs do not.
+    """
+    if BIND_IP == "0.0.0.0":  # noqa: S104 - opt-in for runners that need it
+        return [(BIND_IP, port)]
+    return [(ip, port) for ip in dict.fromkeys(("127.0.0.1", BIND_IP))]
 
 
 def free_port() -> int:
@@ -46,6 +75,60 @@ def wait_for(
                 f"timed out after {timeout}s waiting for {what}" + (f" ({last_exc})" if last_exc else "")
             )
         time.sleep(interval)
+
+
+class TcpForwarder:
+    """Forward `127.0.0.1:<port>` in the test process to `<target>:<port>` (one thread per connection).
+
+    Image refs stay on `localhost:<port>` (the daemon treats loopback registries as insecure-OK), so
+    when the test process does not share the daemon's loopback, its own registry calls go through this.
+    """
+
+    def __init__(self, port: int, target: str) -> None:
+        self._target = (target, port)
+        self._server = socket.create_server(("127.0.0.1", port))
+        self._thread = threading.Thread(target=self._serve, daemon=True)
+
+    def start(self) -> None:
+        """Start accepting connections."""
+        self._thread.start()
+
+    def stop(self) -> None:
+        """Stop accepting connections."""
+        self._server.close()
+
+    def _serve(self) -> None:
+        while True:
+            try:
+                client, _ = self._server.accept()
+            except OSError:
+                return
+            threading.Thread(target=self._bridge, args=(client,), daemon=True).start()
+
+    def _bridge(self, client: socket.socket) -> None:
+        try:
+            upstream = socket.create_connection(self._target, timeout=10)
+        except OSError:
+            client.close()
+            return
+        upstream.settimeout(None)
+        for src, dst in ((client, upstream), (upstream, client)):
+            threading.Thread(target=self._pump, args=(src, dst), daemon=True).start()
+
+    @staticmethod
+    def _pump(src: socket.socket, dst: socket.socket) -> None:
+        try:
+            while data := src.recv(65536):
+                dst.sendall(data)
+        except OSError:
+            pass
+        finally:
+            for sock in (src, dst):
+                try:
+                    sock.shutdown(socket.SHUT_RDWR)
+                except OSError:
+                    pass
+                sock.close()
 
 
 def local_get(url: str, headers: dict[str, str] | None = None) -> httpx.Response:
@@ -143,7 +226,7 @@ class NpmApi:
     """Direct access to the real NPM container (admin API on `admin_port`, proxy on `proxy_port`)."""
 
     def __init__(self, admin_port: int, proxy_port: int) -> None:
-        self.admin_url = f"http://127.0.0.1:{admin_port}"
+        self.admin_url = host_url(admin_port)
         self.proxy_port = proxy_port
         self._token: str | None = None
 
@@ -206,7 +289,7 @@ class NpmApi:
 
     def fetch(self, domain: str) -> httpx.Response:
         """GET `/` through NPM's port 80 with `Host: <domain>`, bypassing any proxy."""
-        return local_get(f"http://127.0.0.1:{self.proxy_port}/", headers={"Host": domain})
+        return local_get(f"{host_url(self.proxy_port)}/", headers={"Host": domain})
 
     def body_via(self, domain: str, expected: str, timeout: float = 45.0) -> str:
         """Poll until the NPM route for `domain` returns a body that equals `expected` (stripped)."""

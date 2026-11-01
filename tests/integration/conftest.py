@@ -4,6 +4,10 @@ Image names are overridable (the defaults are the plain Docker Hub names used in
 `UAM_TEST_REGISTRY_IMAGE`, `UAM_TEST_NPM_IMAGE`, `UAM_TEST_BASE_IMAGE`.
 `UAM_TEST_NPM_TIMEOUT` (seconds, default 240) bounds the wait for NPM; NPM-dependent assertions are
 skipped when it does not come up (set `UAM_TEST_REQUIRE_NPM=1`, as CI does, to fail instead).
+
+`UAM_TEST_DOCKER_HOST_IP` (default 127.0.0.1) is the address at which the test process reaches ports
+the daemon publishes; set it when the tests run in a container beside the daemon (CI on Forgejo).
+`UAM_TEST_BIND_IP` overrides the host address the registry and NPM publish on (defaults to it).
 """
 
 from __future__ import annotations
@@ -23,13 +27,17 @@ from fastapi.testclient import TestClient
 from tests.integration.stub_github import StubGitHub
 from tests.integration.support import (
     BASE_DOMAIN,
+    HOST_IP,
     NPM_LOGIN,
     PORT_RANGE,
     TEST_PREFIX,
     LocalRegistry,
     NpmApi,
+    TcpForwarder,
     Uam,
     free_port,
+    is_loopback,
+    publish,
     wait_for,
 )
 from uam.app import AppConfig, create_app
@@ -45,7 +53,7 @@ _INFRA = {f"{TEST_PREFIX}registry", f"{TEST_PREFIX}npm"}
 def _local_traffic_bypasses_proxy() -> Iterator[None]:
     """UAM's own HTTP clients must reach localhost and the docker bridge directly."""
     patch = pytest.MonkeyPatch()
-    extra = "localhost,127.0.0.1,172.17.0.1"
+    extra = ",".join(dict.fromkeys(("localhost", "127.0.0.1", "172.17.0.1", HOST_IP)))
     for key in ("NO_PROXY", "no_proxy"):
         current = os.environ.get(key, "")
         patch.setenv(key, f"{extra},{current}" if current else extra)
@@ -104,11 +112,12 @@ def registry(docker_client: docker.DockerClient) -> Iterator[LocalRegistry]:
     port = free_port()
     name = f"{TEST_PREFIX}registry"
     _remove_container(docker_client, name)
-    docker_client.containers.run(
-        REGISTRY_IMAGE, name=name, detach=True, ports={"5000/tcp": ("127.0.0.1", port)}
-    )
+    docker_client.containers.run(REGISTRY_IMAGE, name=name, detach=True, ports={"5000/tcp": publish(port)})
     reg = LocalRegistry(port, BASE_IMAGE)
+    forwarder = None if is_loopback(HOST_IP) else TcpForwarder(port, HOST_IP)
     try:
+        if forwarder is not None:
+            forwarder.start()
         wait_for(
             lambda: httpx.get(f"http://{reg.host}/v2/", trust_env=False, timeout=3).status_code == 200,
             timeout=60,
@@ -116,6 +125,8 @@ def registry(docker_client: docker.DockerClient) -> Iterator[LocalRegistry]:
         )
         yield reg
     finally:
+        if forwarder is not None:
+            forwarder.stop()
         _remove_container(docker_client, name)
 
 
@@ -141,7 +152,7 @@ def npm_env(docker_client: docker.DockerClient) -> Iterator[NpmApi | None]:
             f"{name}-data": {"bind": "/data", "mode": "rw"},
             f"{name}-le": {"bind": "/etc/letsencrypt", "mode": "rw"},
         },
-        ports={"81/tcp": ("127.0.0.1", admin), "80/tcp": ("127.0.0.1", proxy)},
+        ports={"81/tcp": publish(admin), "80/tcp": publish(proxy)},
     )
     api = NpmApi(admin, proxy)
     try:

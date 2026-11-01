@@ -86,12 +86,10 @@ def health_of(container: Any) -> str | None:
 
 def body(port: int) -> str:
     """What the app listening on a published host port serves."""
-    from tests.integration.support import local_get
+    from tests.integration.support import host_url, local_get
 
     return str(
-        wait_for(
-            lambda: local_get(f"http://127.0.0.1:{port}/").text.strip(), timeout=30, what=f"app on {port}"
-        )
+        wait_for(lambda: local_get(f"{host_url(port)}/").text.strip(), timeout=30, what=f"app on {port}")
     )
 
 

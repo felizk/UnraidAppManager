@@ -19,6 +19,21 @@ jobs:
           docker pull registry:2
           docker pull jc21/nginx-proxy-manager:2.12.3
           docker pull alpine:3.20
+      # The job runs in a container beside the host's Docker daemon, so the ports the tests publish
+      # are on the host, reached through the job container's default gateway (not 127.0.0.1).
+      - name: Find the Docker host address
+        run: |
+          gw=""
+          if [ ! -f /.dockerenv ]; then
+            echo "Not in a container: the daemon's ports are on loopback"
+          else
+            gw=$(ip route 2>/dev/null | awk '/^default/ {print $3; exit}')
+          fi
+          if [ -f /.dockerenv ] && [ -z "$gw" ]; then
+            gw=$(docker network inspect bridge -f '{{(index .IPAM.Config 0).Gateway}}')
+          fi
+          echo "Docker host: ${gw:-127.0.0.1}"
+          echo "UAM_TEST_DOCKER_HOST_IP=${gw:-127.0.0.1}" >> "$GITHUB_ENV"
       - name: Integration tests (real Docker, NPM and registry)
         env:
           UAM_TEST_REQUIRE_NPM: "1"
