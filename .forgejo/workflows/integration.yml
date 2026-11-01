@@ -27,10 +27,10 @@ jobs:
           if [ ! -f /.dockerenv ]; then
             echo "Not in a container: the daemon's ports are on loopback"
           else
-            gw=$(ip route 2>/dev/null | awk '/^default/ {print $3; exit}')
-          fi
-          if [ -f /.dockerenv ] && [ -z "$gw" ]; then
-            gw=$(docker network inspect bridge -f '{{(index .IPAM.Config 0).Gateway}}')
+            gw=$(uv run python -c 'import socket, struct; print(next((socket.inet_ntoa(struct.pack("<L", int(f[2], 16))) for f in (line.split() for line in open("/proc/net/route").readlines()[1:]) if f[1] == "00000000"), ""))' || true)
+            if [ -z "$gw" ]; then
+              gw=$(docker network inspect bridge -f '{{(index .IPAM.Config 0).Gateway}}' || true)
+            fi
           fi
           echo "Docker host: ${gw:-127.0.0.1}"
           echo "UAM_TEST_DOCKER_HOST_IP=${gw:-127.0.0.1}" >> "$GITHUB_ENV"
