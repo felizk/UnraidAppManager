@@ -61,6 +61,14 @@ async def test_dashboard_card_content(env: UiEnv) -> None:
     assert f"/apps/{app.id}/update" in r.text
 
 
+async def test_dashboard_sorts_apps_by_name(env: UiEnv) -> None:
+    for name in ("zulu", "Alpha", "mike"):
+        await env.fakes.apps.add(make_app(name=name))
+    for path in ("/", "/fragments/cards"):
+        text = (await env.client.get(path)).text
+        assert text.index("Alpha") < text.index("mike") < text.index("zulu")
+
+
 async def test_card_shows_webui_link_from_container_label(env: UiEnv) -> None:
     app = await env.fakes.apps.add(make_app(name="notes", state=AppState.RUNNING, container_id="cid"))
     env.fakes.docker.seed_container(

@@ -32,6 +32,12 @@ Orchestrator = Annotated[OrchestratorService, Depends(get_orchestrator)]
 Checker = Annotated[UpdateCheckerService, Depends(get_checker)]
 
 
+async def _sorted_views(request: Request, services: Services) -> list[AppView]:
+    """Views for every app, ordered by name (case-insensitive)."""
+    apps = sorted(await services.apps.list(), key=lambda a: (a.name.casefold(), a.name))
+    return await build_views(request, services, apps)
+
+
 async def _view(request: Request, services: Services, app_id: int) -> AppView:
     app = await services.apps.get(app_id)
     return (await build_views(request, services, [app]))[0]
@@ -46,15 +52,15 @@ async def _respond(request: Request, services: Services, app_id: int, view: str)
 
 @router.get("/")
 async def dashboard(request: Request, services: Services) -> Response:
-    """One card per app."""
-    views = await build_views(request, services, await services.apps.list())
+    """One card per app, sorted by name."""
+    views = await _sorted_views(request, services)
     return render(request, "dashboard.html", views=views, active="dashboard")
 
 
 @router.get("/fragments/cards")
 async def cards_fragment(request: Request, services: Services) -> Response:
     """The card grid (polled by the dashboard)."""
-    views = await build_views(request, services, await services.apps.list())
+    views = await _sorted_views(request, services)
     return render(request, "_cards.html", views=views)
 
 
