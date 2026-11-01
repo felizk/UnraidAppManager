@@ -229,6 +229,18 @@ async def test_plan_flash_template_is_fallback_only(env: Env) -> None:
     assert "Path:/data" not in p.overrides
 
 
+async def test_plan_keeps_custom_network(env: Env) -> None:
+    env.fakes.docker.seed_container(foreign(network="proxynet"))
+    p = await plan(env)
+    assert p.overrides["Network"] == "proxynet"
+
+
+async def test_plan_ignores_template_network_and_container_mode(env: Env) -> None:
+    env.fakes.docker.seed_container(foreign(network="container:abc123"))
+    p = await plan(env)
+    assert "Network" not in p.overrides
+
+
 async def test_plan_dropped_lists_unknown_settings(env: Env) -> None:
     p = await plan(env)
     assert set(p.dropped) == {

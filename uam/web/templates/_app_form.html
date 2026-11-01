@@ -25,6 +25,15 @@
     </label>
     <label><input type="checkbox" name="auto_ports" value="1" {% if state.auto_ports %}checked{% endif %}>
       Allocate host ports automatically (from the configured range)</label>
+    <label>Network
+      <input type="text" name="network" value="{{ state.network }}" list="network-choices" autocomplete="off"
+        placeholder="template default ({{ tpl.network or 'bridge' }})"
+        {% if state.errors.get('network') %}aria-invalid="true"{% endif %}>
+      <datalist id="network-choices">{% for n in networks %}<option value="{{ n }}">{% endfor %}</datalist>
+      {% if state.errors.get('network') %}<small class="field-error">{{ state.errors.get('network') }}</small>{% endif %}
+      <small>Docker network to attach the container to. Put apps on the same user-defined network
+        (for example one created with <code>docker network create</code>) to let them reach each other by container name.</small>
+    </label>
   </fieldset>
 
   {% for title, normal, advanced in groups %}

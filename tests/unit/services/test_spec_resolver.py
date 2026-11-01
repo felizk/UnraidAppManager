@@ -239,6 +239,25 @@ async def test_host_network_skips_ports(resolver: DefaultSpecResolver, ports: Fa
     assert ports.allocs == {}
 
 
+async def test_network_override_replaces_template_network(resolver: DefaultSpecResolver) -> None:
+    t = custom(cfg("Port", "8080", "8080"), extra_params="--network proxynet --network other")
+    r = await resolver.resolve(make_app(id=1, auto_ports=False, overrides={"Network": "proxynet"}), t)
+    assert r.spec.network == "proxynet"
+    assert r.spec.extra_networks == ("other",)
+    assert [b.host_port for b in r.spec.ports] == [8080]
+
+
+async def test_network_override_to_host_skips_ports(resolver: DefaultSpecResolver) -> None:
+    t = custom(cfg("Port", "8080", "8080"))
+    r = await resolver.resolve(make_app(id=1, overrides={"Network": "host"}), t)
+    assert r.spec.network == "host" and r.spec.ports == ()
+
+
+async def test_blank_network_override_uses_template(resolver: DefaultSpecResolver) -> None:
+    r = await resolver.resolve(make_app(overrides={"Network": " "}), custom(network="br0"))
+    assert r.spec.network == "br0"
+
+
 # ---- required fields ----
 
 

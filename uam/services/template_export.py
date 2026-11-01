@@ -208,6 +208,7 @@ class TemplateExporter:
         exported: UnraidTemplate = replace(
             template,
             name=app.name,
+            network=resolved.spec.network,
             configs=tuple(replace(c, value=value(c)) for c in template.configs),
         )
         return self._codec.render(exported)

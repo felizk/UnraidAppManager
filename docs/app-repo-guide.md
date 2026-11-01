@@ -22,7 +22,7 @@ includes `UAM.md`, a short rules file to reference from the app repo's `CLAUDE.m
 | Detects template updates | The last commit that touched the template file | Commit template changes on the tracked branch (default `main`) |
 | Decides whether an update succeeded | The container's Docker `HEALTHCHECK`, or "still running after 15 s" if there is none | Ship a meaningful `HEALTHCHECK` |
 | Allocates host ports and proxies the WebUI | `Type="Port"` configs and `<WebUI>` `[PORT:N]` | Declare every port and point WebUI at the HTTP one |
-| Remembers user settings | Override key `<Type>:<Target>` (for example `Variable:TZ`) | **Never rename a config's `Target`** casually |
+| Remembers user settings | Override key `<Type>:<Target>` (for example `Variable:TZ`), plus `Network` for the chosen Docker network | **Never rename a config's `Target`** casually |
 | Matches running containers when importing | The image label `org.opencontainers.image.source` | Build with `docker/metadata-action` (adds the label automatically) |
 
 ## 2. Repository layout
@@ -50,7 +50,7 @@ Start from [`app-repo-kit/unraid/myapp.xml`](app-repo-kit/unraid/myapp.xml). Rul
 |---|---|
 | `Name` | Container name. Must match `[a-zA-Z0-9][a-zA-Z0-9_.-]*`. Keep it stable. |
 | `Repository` | Full image ref with a **moving tag**. If you pin `:1.4.2`, the app only updates when the template changes. |
-| `Network` | `bridge` unless you really need `host`. Ports are **not** mapped with `host`, so there's no auto-port or proxy for them. |
+| `Network` | `bridge` unless you really need `host`. Ports are **not** mapped with `host`, so there's no auto-port or proxy for them. It's only a default: users can pick another network per app (override key `Network`), for example a shared user-defined network. |
 | `WebUI` | `http://[IP]:[PORT:<container port>]/`. `N` must be a declared Port target. This is the port the reverse proxy forwards to. |
 | `Icon`, `Overview`, `Project`, `Support` | Fill them in. `Project` should be the GitHub URL, which helps import matching. |
 | `ExtraParams` | Avoid. If needed, only these flags are supported: `--restart --memory/-m --cpus --cpuset-cpus --hostname/-h --cap-add --device -e/--env -l/--label --log-opt --network`. Anything else is ignored, with a warning. |

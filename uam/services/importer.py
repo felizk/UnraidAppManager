@@ -154,6 +154,9 @@ def _unique_bindings(bindings: Sequence[PortBinding]) -> list[PortBinding]:
     return result
 
 
+_NETWORK_KEY = "Network"
+
+
 def derive_overrides(
     template: UnraidTemplate,
     info: ContainerInfo,
@@ -189,6 +192,9 @@ def derive_overrides(
             key = _port_key(c)
         if actual is not None and actual != _config_default(c):
             overrides[key] = actual
+    if info.network and not info.network.startswith("container:"):
+        if info.network != (template.network or "bridge"):
+            overrides[_NETWORK_KEY] = info.network
     return overrides
 
 

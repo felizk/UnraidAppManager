@@ -385,6 +385,65 @@ async def test_edit_flag_change_without_config_change_does_not_reconfigure(env: 
     assert (await env.fakes.apps.get(app.id)).auto_update_template is True
 
 
+async def test_form_suggests_networks_in_use(env: UiEnv) -> None:
+    src = await env.seed_source()
+    env.fakes.docker.seed_container(
+        ContainerInfo(
+            id="n1",
+            name="npm",
+            image="npm",
+            image_digest=None,
+            state="running",
+            health=None,
+            labels={},
+            published_ports=(),
+            network="proxynet",
+        )
+    )
+    r = await env.client.get("/apps/new", params={"source": src.id, "path": "unraid/notes.xml"})
+    assert 'name="network"' in r.text
+    assert '<option value="proxynet">' in r.text and '<option value="bridge">' in r.text
+
+
+async def test_create_app_with_network(env: UiEnv) -> None:
+    src = await env.seed_source()
+    data = {
+        "source_id": str(src.id),
+        "template_path": "unraid/notes.xml",
+        "name": "my-notes",
+        "network": "proxynet",
+        "ov:Variable:TZ": "UTC",
+        "auto_ports": "1",
+    }
+    r = await env.client.post("/apps/new", data=data, headers=HX)
+    assert r.status_code == 200
+    _, args = next(c for c in env.api.orchestrator.calls if c[0] == "add_app")
+    assert args[3] == {"Variable:TZ": "UTC", "Network": "proxynet"}
+
+
+async def test_create_app_rejects_bad_network(env: UiEnv) -> None:
+    src = await env.seed_source()
+    data = {"source_id": str(src.id), "template_path": "unraid/notes.xml", "name": "n", "network": "bad net"}
+    r = await env.client.post("/apps/new", data=data, headers=HX)
+    assert r.status_code == 422 and "field-error" in r.text
+    assert not any(c[0] == "add_app" for c in env.api.orchestrator.calls)
+
+
+async def test_edit_network_keeps_clears_and_sets(env: UiEnv) -> None:
+    src = await env.seed_source()
+    app = await env.fakes.apps.add(
+        make_app(source_id=src.id, template_path="unraid/notes.xml", overrides={"Network": "proxynet"})
+    )
+    r = await env.client.get(f"/apps/{app.id}/edit")
+    assert 'name="network" value="proxynet"' in r.text
+    flags = {"auto_ports": "1", "ssl_forced": "1", "websockets": "1"}
+    await env.client.post(f"/apps/{app.id}/edit", data=flags)
+    assert not any(c[0] == "reconfigure" for c in env.api.orchestrator.calls)
+    await env.client.post(f"/apps/{app.id}/edit", data={**flags, "network": ""})
+    _, args = next(c for c in env.api.orchestrator.calls if c[0] == "reconfigure")
+    assert "Network" not in args[1]
+
+
 # ---------------------------------------------------------------- sources
 async def test_sources_page_lists_and_adds(env: UiEnv) -> None:
     r = await env.client.get("/sources")

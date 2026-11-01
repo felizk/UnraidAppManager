@@ -38,6 +38,10 @@ def replace_image_tag(image: str, tag: str) -> str:
     return f"{ref}:{tag}"
 
 
+NETWORK_KEY = "Network"
+"""`App.overrides` key that replaces the template's `<Network>`."""
+
+
 def override_key(config: TemplateConfig) -> str:
     """The `App.overrides` key for a template entry (`Port:<target>/<mode>` for ports)."""
     if config.type == "Port":
@@ -64,7 +68,8 @@ class DefaultSpecResolver:
                 raw = c.value or c.default
             return raw.strip() if c.type == "Port" else raw
 
-        host_net = template.network == "host"
+        network = app.overrides.get(NETWORK_KEY, "").strip() or template.network or "bridge"
+        host_net = network == "host"
 
         env: dict[str, str] = {}
         labels: dict[str, str] = {}
@@ -129,7 +134,7 @@ class DefaultSpecResolver:
             command = tuple(shlex.split(template.post_args))
         except ValueError as e:
             raise ValidationError(f"PostArgs cannot be parsed: {e}") from e
-        extra_networks = tuple(n for n in extra.networks if n != template.network)
+        extra_networks = tuple(n for n in extra.networks if n != network)
 
         webui_template, webui_host, webui_container = _resolve_webui(template.webui, bindings, host_net)
 
@@ -159,7 +164,7 @@ class DefaultSpecResolver:
             mounts=tuple(mounts),
             devices=tuple(devices),
             labels=labels,
-            network=template.network or "bridge",
+            network=network,
             privileged=template.privileged,
             restart_policy=extra.restart or "unless-stopped",
             hostname=extra.hostname,

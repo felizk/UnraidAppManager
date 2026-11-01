@@ -33,6 +33,7 @@ GROUPS: tuple[tuple[str, str], ...] = (
 )
 _LABEL = re.compile(r"^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$")
 _NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
+NETWORK_KEY = "Network"
 
 
 def override_key(c: TemplateConfig) -> str:
@@ -74,6 +75,7 @@ class FormState:
     """Current values of the non-template inputs."""
 
     name: str = ""
+    network: str = ""
     subdomain: str = ""
     forward_mode: str = "host_port"
     certificate_id: str = ""
@@ -131,6 +133,7 @@ def _state_from_app(app: App) -> FormState:
     p = app.proxy
     return FormState(
         name=app.name,
+        network=app.overrides.get(NETWORK_KEY, ""),
         subdomain=p.subdomain or "",
         forward_mode=p.forward_mode,
         certificate_id="" if p.certificate_id is None else str(p.certificate_id),
@@ -143,6 +146,16 @@ def _state_from_app(app: App) -> FormState:
         image_tag_override=app.image_tag_override or "",
         install=False,
     )
+
+
+async def network_choices(services: ApiServices, tpl: UnraidTemplate) -> list[str]:
+    """Network names to suggest: the defaults, the template's and those existing containers use."""
+    names = {"bridge", "host", tpl.network or "bridge"}
+    try:
+        names |= {c.network for c in await services.docker.list_containers()}
+    except UamError:
+        pass
+    return sorted(n for n in names if n and not n.startswith("container:"))
 
 
 async def _build_fields(
@@ -211,6 +224,7 @@ async def _form_context(
         "certs": certs,
         "access_lists": lists,
         "proxy_note": note,
+        "networks": await network_choices(services, tpl),
         "base_domain": settings.base_domain or "",
         "active": "sources",
     }
@@ -287,6 +301,7 @@ async def _parse(
     """Read and validate the posted form. Returns state (with errors), overrides, proxy, raw fields."""
     state = FormState(
         name=form_value(form, "name").strip(),
+        network=form_value(form, "network", existing.get(NETWORK_KEY, "")).strip(),
         subdomain=form_value(form, "subdomain").strip().lower(),
         forward_mode=form_value(form, "forward_mode", "host_port"),
         certificate_id=form_value(form, "certificate_id"),
@@ -303,6 +318,8 @@ async def _parse(
     errors = state.errors
     if not editing and state.name and not _NAME.match(state.name):
         errors["name"] = "use letters, digits, '.', '_' and '-' only"
+    if state.network and not _NAME.match(state.network):
+        errors["network"] = "use letters, digits, '.', '_' and '-' only"
     settings = await services.settings.get()
     if state.subdomain:
         if not _LABEL.match(state.subdomain):
@@ -314,7 +331,10 @@ async def _parse(
     cert = _parse_id(state.certificate_id, "certificate", state, "certificate_id")
     acl = _parse_id(state.access_list_id, "access list", state, "access_list_id")
 
-    overrides = {k: v for k, v in existing.items() if k not in {override_key(c) for c in tpl.configs}}
+    managed = {override_key(c) for c in tpl.configs} | {NETWORK_KEY}
+    overrides = {k: v for k, v in existing.items() if k not in managed}
+    if state.network and state.network != (tpl.network or "bridge"):
+        overrides[NETWORK_KEY] = state.network
     for c in tpl.configs:
         key = override_key(c)
         if f"ov:{key}" not in raw:
