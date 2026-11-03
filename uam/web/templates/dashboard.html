@@ -2,6 +2,7 @@
 {% block title %}Apps - UAM{% endblock %}
 {% block content %}
 <h1>Apps</h1>
+<div id="self-banner" hx-get="/fragments/self/banner" hx-trigger="load" hx-swap="innerHTML"></div>
 <div id="cards" hx-get="/fragments/cards" hx-trigger="every 10s" hx-swap="innerHTML">
   {% include "_cards.html" %}
 </div>

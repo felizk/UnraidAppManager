@@ -39,6 +39,35 @@ the template rules, the publish workflow, `uam-lint`, and a starter kit for peop
 | `UAM_PROC_ROOT` | `/host/proc` | where the host's `/proc` is mounted |
 | `UAM_GITHUB_API_URL` | `https://api.github.com` | GitHub API base URL (GitHub Enterprise, or a stub in tests) |
 | `UAM_LOG_LEVEL` | `INFO` | log level (JSON logs on stdout) |
+| `UAM_SELF_AUTO_UPDATE` | off | `1` lets UAM install new versions of itself on its own (see below) |
+| `UAM_SELF_CONTAINER` | detected | name or id of UAM's own container, if it can't be detected |
+
+## Updating UAM itself
+
+UAM watches its own image the same way it watches apps: every 6 hours (or with **Check now** under
+Settings) it compares the registry's digest for its image tag with the image it is running. When a
+new version is out, the dashboard says so, a Pushover notification goes out (if set up), and
+Settings offers **Update UAM**.
+
+UAM can't replace its own container from inside it, so the update works like this:
+
+1. UAM pulls the new image. If that fails, nothing has changed.
+2. It starts a short-lived helper container, `unraid-app-manager-self-update`, from the image it is
+   running now, with only the Docker socket and the data folder mounted.
+3. The helper stops UAM, renames it to `unraid-app-manager__uam_old`, and creates a new container with
+   the same name and settings (ports, paths, variables, labels, networks and static IPs, restart
+   policy) on the new image.
+4. If the new container becomes healthy, the old one is removed. If it exits, restarts or stays
+   unhealthy, the helper removes it and starts the old container again under its own name.
+5. The helper removes itself. The UAM that comes up afterwards shows the outcome under Settings,
+   records it in the event log and sends a notification.
+
+UAM is unavailable for about a minute while this runs. The container keeps Unraid's
+`net.unraid.docker.managed=dockerman` label, so Unraid's Docker tab still lists and edits it as
+before, and updating from there keeps working too. With `UAM_SELF_AUTO_UPDATE=1`, UAM installs new
+versions after the check finds them; an image that was rolled back once isn't tried again
+automatically. Self-update needs the Docker socket at `/var/run/docker.sock` and an image tag (not a
+digest); the old image is left on the server, like Unraid's own updates do.
 
 ## Credentials
 

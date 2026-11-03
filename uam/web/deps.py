@@ -29,6 +29,7 @@ from uam.contracts import (
     Vault,
 )
 from uam.domain import App, PortAllocation, ProxySettings, UpdateCheckResult
+from uam.self_update.service import SelfStatus
 from uam.services.template_export import ExportPlan as ExportPlan
 
 if TYPE_CHECKING:
@@ -83,6 +84,16 @@ class TemplateExporterService(Protocol):
     async def apply(self, plans: list[ExportPlan], include_secrets: bool | None = None) -> list[str]: ...
 
 
+class SelfUpdaterService(Protocol):
+    """`uam.self_update.SelfUpdater`: UAM's own container."""
+
+    async def status(self) -> SelfStatus: ...
+
+    async def check(self) -> SelfStatus: ...
+
+    async def start_update(self) -> None: ...
+
+
 class PortReader(Protocol):
     """Read-only view of the port allocation table (`PortAllocator` has no way to list them)."""
 
@@ -118,6 +129,7 @@ class ApiServices:
     clock: Callable[[], datetime] = field(default=_utcnow)
     auth: AuthManager | None = None
     notifier: Notifier | None = None
+    self_updater: SelfUpdaterService | None = None
 
 
 REQUIRED_PAT_SCOPES = ("repo", "read:packages")

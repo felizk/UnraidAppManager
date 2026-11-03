@@ -1,0 +1,34 @@
+<article id="self-update" {% if s and s.updating %}hx-get="/fragments/self" hx-trigger="every 5s" hx-swap="outerHTML"{% endif %}>
+  <header><strong>Unraid App Manager</strong>
+    {% if s and s.updating %}<span class="badge busy">updating</span>
+    {% elif s and s.update_available %}<span class="badge update">update available</span>
+    {% elif s and s.supported and s.latest_digest %}<span class="badge state-running">up to date</span>{% endif %}
+  </header>
+  {% if error %}<p class="field-error" role="alert">{{ error }}</p>{% endif %}
+  {% if notice %}<p role="status">{{ notice }}</p>{% endif %}
+  {% if s is none %}
+  <p class="meta">Self-update isn't available in this mode.</p>
+  {% else %}
+  <dl class="kv">
+    <dt>Version</dt><dd>{{ s.version }}{% if s.revision %} <small>(revision {{ s.revision[:7] }}{% if s.created %}, built {{ s.created[:10] }}{% endif %})</small>{% endif %}</dd>
+    {% if s.container_name %}<dt>Container</dt><dd>{{ s.container_name }}</dd>{% endif %}
+    {% if s.image %}<dt>Image</dt><dd><code>{{ s.image }}</code></dd>{% endif %}
+    {% if s.current_digest %}<dt>Running digest</dt><dd><code>{{ s.current_digest[:19] }}</code></dd>{% endif %}
+    {% if s.latest_digest %}<dt>Newest digest</dt><dd><code>{{ s.latest_digest[:19] }}</code></dd>{% endif %}
+    <dt>Last checked</dt><dd>{{ s.checked_at | ago }}</dd>
+    {% if s.last_result %}<dt>Last update</dt><dd class="{{ '' if s.last_result.ok else 'field-error' }}">{{ s.last_result.message }}{% if s.last_result.at %} <small>({{ s.last_result.at[:16] | replace('T', ' ') }} UTC)</small>{% endif %}</dd>{% endif %}
+  </dl>
+  {% if s.error %}<p class="warn">{{ s.error }}</p>{% endif %}
+  {% if not s.supported %}
+  <p class="meta">{{ s.reason }}. You can still update UAM from Unraid's Docker tab.</p>
+  {% elif not s.updating %}
+  <div class="actions">
+    <button type="button" class="sm outline" hx-post="/self/check" hx-target="#self-update" hx-swap="outerHTML" hx-disabled-elt="this">Check now</button>
+    {% if s.update_available %}
+    <button type="button" class="sm" hx-post="/self/update" hx-target="#self-update" hx-swap="outerHTML" hx-disabled-elt="this"
+            hx-confirm="Update UAM now? It restarts on the new image and is unavailable for a minute or so. If the new version doesn't start, the current one is put back.">Update UAM</button>
+    {% endif %}
+  </div>
+  {% endif %}
+  {% endif %}
+</article>

@@ -127,3 +127,31 @@ async def test_start_registers_jobs_and_shutdown(fakes: FakeBundle, frozen_now: 
     finally:
         sched.shutdown()
     sched.shutdown()
+
+
+class SelfJobs:
+    def __init__(self) -> None:
+        self.checks = 0
+        self.finishes = 0
+
+    async def scheduled_check(self) -> None:
+        self.checks += 1
+
+    async def finish_pending(self) -> None:
+        self.finishes += 1
+        raise RuntimeError("unreadable")
+
+
+async def test_self_update_jobs(fakes: FakeBundle, frozen_now: FrozenClock) -> None:
+    jobs_impl = SelfJobs()
+    sched = UpdateScheduler(StubChecker(), fakes.apps, Syncer(), frozen_now, self_update=jobs_impl)  # type: ignore[arg-type]
+    sched.start()
+    try:
+        jobs = {j.id: j for j in sched._scheduler.get_jobs()}
+        assert set(jobs) == {"tick", "sync_state", "self_check", "self_result"}
+        assert jobs["self_check"].trigger.interval == timedelta(hours=6)
+        assert jobs["self_result"].trigger.interval == timedelta(minutes=1)
+        await jobs["self_result"].func()  # errors are logged, not raised
+        assert jobs_impl.finishes == 1
+    finally:
+        sched.shutdown()

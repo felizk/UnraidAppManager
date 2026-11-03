@@ -39,6 +39,8 @@ class AppConfig:
     proc_root: str = "/host/proc"
     start_scheduler: bool = True
     github_api_url: str = "https://api.github.com"
+    self_container: str | None = None
+    self_auto_update: bool = False
 
     @property
     def database_url(self) -> str:
@@ -57,6 +59,8 @@ class AppConfig:
             proc_root=env.get("UAM_PROC_ROOT", "/host/proc"),
             start_scheduler=env.get("UAM_SCHEDULER", "1") != "0",
             github_api_url=env.get("UAM_GITHUB_API_URL") or "https://api.github.com",
+            self_container=env.get("UAM_SELF_CONTAINER") or None,
+            self_auto_update=_flag(env.get("UAM_SELF_AUTO_UPDATE")),
         )
 
 
@@ -74,6 +78,7 @@ class Runtime:
 
     services: ApiServices
     scheduler: Scheduler | None = None
+    startup: list[Callable[[], Awaitable[None]]] = field(default_factory=list)
     closers: list[Callable[[], Awaitable[None]]] = field(default_factory=list)
 
     async def close(self) -> None:
@@ -106,6 +111,9 @@ async def build_runtime(config: AppConfig) -> Runtime:
     from uam.ports.allocator import DbPortAllocator
     from uam.ports.probe import HostListenerProbe
     from uam.proxy_switch import SettingsBackedProxyManager
+    from uam.self_update import SelfUpdater
+    from uam.self_update.engine import SdkEngineApi
+    from uam.services.importer import own_container_id
     from uam.unraid_template import XmlTemplateCodec
     from uam.vault import FernetFieldCipher, FernetVault, load_fernet
 
@@ -127,6 +135,20 @@ async def build_runtime(config: AppConfig) -> Runtime:
     probe = HostListenerProbe(str(proc_net)) if proc_net.is_dir() else None
     ports = DbPortAllocator(sf, settings, docker, probe)
     proxy = SettingsBackedProxyManager(settings, vault, http)
+    notifier = PushoverNotifier(settings, vault, http)
+    self_updater = SelfUpdater(
+        SdkEngineApi(),
+        docker,
+        registry,
+        vault,
+        kv,
+        events,
+        _utcnow,
+        container_ref=config.self_container or own_container_id(),
+        data_dir=config.data_dir,
+        notifier=notifier,
+        auto_update=config.self_auto_update,
+    )
 
     runtime = _assemble(
         config,
@@ -142,8 +164,10 @@ async def build_runtime(config: AppConfig) -> Runtime:
         ports=ports,
         proxy=proxy,
         codec=XmlTemplateCodec(),
-        notifier=PushoverNotifier(settings, vault, http),
+        notifier=notifier,
+        self_updater=self_updater,
     )
+    runtime.startup.append(self_updater.finish_pending)
     runtime.closers += [db.dispose, http.aclose, registry.aclose]
     return runtime
 
@@ -259,8 +283,13 @@ def _assemble(config: AppConfig, **c: object) -> Runtime:
         api_token=config.api_token,
         clock=clock,
         notifier=k["notifier"],
+        self_updater=k.get("self_updater"),
     )
-    scheduler = UpdateScheduler(checker, k["apps"], orchestrator, clock) if config.start_scheduler else None
+    scheduler = (
+        UpdateScheduler(checker, k["apps"], orchestrator, clock, self_update=k.get("self_updater"))
+        if config.start_scheduler
+        else None
+    )
     return Runtime(services=services, scheduler=scheduler)
 
 
@@ -284,6 +313,11 @@ def create_app(
         runtime = await runtime_factory(config)
         app.state.services = runtime.services
         app.state.runtime = runtime
+        for job in runtime.startup:
+            try:
+                await job()
+            except Exception:  # a report that fails must not keep UAM from starting
+                log.exception("startup job failed")
         if runtime.scheduler is not None:
             runtime.scheduler.start()
         try:

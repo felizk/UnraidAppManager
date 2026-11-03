@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 
 from uam.web.auth import csrf_guard
 from uam.web.deps import ApiServices
-from uam.web.ui import admin, appform, apps, auth_pages, imports, sources
+from uam.web.ui import admin, appform, apps, auth_pages, imports, self_update, sources
 from uam.web.ui.support import STATIC_DIR, UiRoute, require_page
 
 __all__ = ["create_ui_app", "create_ui_router", "mount_static"]
@@ -21,7 +21,7 @@ def create_ui_router() -> APIRouter:
     root = APIRouter(route_class=UiRoute, dependencies=[Depends(csrf_guard)])
     root.include_router(auth_pages.router)
     protected = APIRouter(route_class=UiRoute, dependencies=[Depends(require_page)])
-    for module in (appform, apps, sources, admin, imports):
+    for module in (appform, apps, sources, admin, imports, self_update):
         protected.include_router(module.router)
     root.include_router(protected)
     return root

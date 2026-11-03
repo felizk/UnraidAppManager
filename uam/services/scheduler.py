@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from collections.abc import Callable
-from datetime import datetime
+from collections.abc import Awaitable, Callable
+from datetime import datetime, timedelta
 from typing import Protocol
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -19,6 +19,15 @@ log = logging.getLogger(__name__)
 TICK_SECONDS = 60
 SYNC_MINUTES = 1
 CONCURRENCY = 4
+SELF_CHECK_HOURS = 6
+
+
+class SelfUpdateJobs(Protocol):
+    """The slice of `SelfUpdater` that the scheduler runs."""
+
+    async def scheduled_check(self) -> None: ...
+
+    async def finish_pending(self) -> None: ...
 
 
 class StateSyncer(Protocol):
@@ -37,12 +46,14 @@ class UpdateScheduler:
         syncer: StateSyncer,
         clock: Callable[[], datetime],
         concurrency: int = CONCURRENCY,
+        self_update: SelfUpdateJobs | None = None,
     ) -> None:
         self._checker = checker
         self._apps = apps
         self._syncer = syncer
         self._clock = clock
         self._concurrency = concurrency
+        self._self_update = self_update
         self._scheduler = AsyncIOScheduler()
 
     def start(self) -> None:
@@ -53,7 +64,37 @@ class UpdateScheduler:
         self._scheduler.add_job(
             self.sync, "interval", minutes=SYNC_MINUTES, id="sync_state", max_instances=1, coalesce=True
         )
+        if self._self_update is not None:
+            first = self._clock() + timedelta(minutes=2)
+            self._scheduler.add_job(
+                self._self_update.scheduled_check,
+                "interval",
+                hours=SELF_CHECK_HOURS,
+                next_run_time=first,
+                id="self_check",
+                max_instances=1,
+                coalesce=True,
+            )
+            self._scheduler.add_job(
+                self._guard(self._self_update.finish_pending, "self-update result"),
+                "interval",
+                minutes=1,
+                next_run_time=self._clock(),
+                id="self_result",
+                max_instances=1,
+                coalesce=True,
+            )
         self._scheduler.start()
+
+    @staticmethod
+    def _guard(job: Callable[[], Awaitable[None]], what: str) -> Callable[[], Awaitable[None]]:
+        async def run() -> None:
+            try:
+                await job()
+            except Exception:
+                log.exception("%s failed", what)
+
+        return run
 
     def shutdown(self) -> None:
         """Stop the scheduler without waiting for running jobs."""

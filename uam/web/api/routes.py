@@ -46,6 +46,7 @@ from uam.web.api.schemas import (
     PortAllocationOut,
     PortInUseOut,
     PortsOut,
+    SelfStatusOut,
     SettingsModel,
     SourceIn,
     SourceOut,
@@ -57,6 +58,7 @@ from uam.web.auth import COOKIE_NAME, SESSION_MAX_AGE, AuthManager
 from uam.web.deps import (
     ApiServices,
     OrchestratorService,
+    SelfUpdaterService,
     TemplateExporterService,
     UpdateCheckerService,
     get_auth,
@@ -153,6 +155,32 @@ async def logout(response: Response) -> OkOut:
 
 # =========================================================================== protected
 protected = APIRouter(route_class=UamRoute)
+
+
+# ---------------------------------------------------------------- UAM itself
+def _self_updater(services: ApiServices) -> SelfUpdaterService:
+    if services.self_updater is None:
+        raise ValidationError("self-update is not available in this mode")
+    return services.self_updater
+
+
+@protected.get("/self", response_model=SelfStatusOut)
+async def self_status(services: Annotated[ApiServices, Depends(get_services)]) -> SelfStatusOut:
+    """UAM's own container, its image, and the result of the last update check."""
+    return SelfStatusOut.from_status(await _self_updater(services).status())
+
+
+@protected.post("/self/check", response_model=SelfStatusOut)
+async def self_check(services: Annotated[ApiServices, Depends(get_services)]) -> SelfStatusOut:
+    """Ask the registry whether a newer UAM image exists."""
+    return SelfStatusOut.from_status(await _self_updater(services).check())
+
+
+@protected.post("/self/update", response_model=OkOut, status_code=202)
+async def self_update(services: Annotated[ApiServices, Depends(get_services)]) -> OkOut:
+    """Pull the newest UAM image and restart UAM on it (UAM is unavailable for a minute or so)."""
+    await _self_updater(services).start_update()
+    return OkOut()
 
 
 # ---------------------------------------------------------------- settings

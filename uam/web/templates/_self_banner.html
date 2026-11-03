@@ -1,0 +1,5 @@
+{% if s and s.updating %}
+<article class="flash ok" role="status" hx-get="/fragments/self/banner" hx-trigger="every 5s" hx-swap="innerHTML" hx-target="#self-banner">UAM is updating itself and will be back in a minute or so.</article>
+{% elif s and s.update_available %}
+<article class="flash ok" role="status">A new version of UAM is available. <a href="/settings#self-update">Review and update</a></article>
+{% endif %}
