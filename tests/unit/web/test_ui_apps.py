@@ -470,17 +470,32 @@ async def test_sources_page_lists_and_adds(env: UiEnv) -> None:
 @pytest.mark.parametrize(
     ("raw", "expected"),
     [
-        ("felizk/notes", ("felizk", "notes", None, None)),
-        ("https://github.com/felizk/notes", ("felizk", "notes", None, None)),
-        ("https://github.com/felizk/notes/tree/dev", ("felizk", "notes", "dev", None)),
+        ("felizk/notes", ("felizk", "notes", None, None, "")),
+        ("https://github.com/felizk/notes", ("felizk", "notes", None, None, "")),
+        ("https://github.com/felizk/notes/tree/dev", ("felizk", "notes", "dev", None, "")),
         (
             "https://github.com/felizk/notes/blob/dev/unraid/notes.xml",
-            ("felizk", "notes", "dev", "unraid/notes.xml"),
+            ("felizk", "notes", "dev", "unraid/notes.xml", ""),
         ),
-        ("git@github.com:felizk/notes.git", ("felizk", "notes", None, None)),
+        ("git@github.com:felizk/notes.git", ("felizk", "notes", None, None, "")),
+        ("https://git.example.com/felizk/notes", ("felizk", "notes", None, None, "https://git.example.com")),
+        (
+            "http://192.168.1.5:3000/felizk/notes.git",
+            ("felizk", "notes", None, None, "http://192.168.1.5:3000"),
+        ),
+        (
+            "https://git.example.com/felizk/notes/src/branch/dev/unraid/notes.xml",
+            ("felizk", "notes", "dev", "unraid/notes.xml", "https://git.example.com"),
+        ),
+        (
+            "https://example.com/forge/felizk/notes/src/tag/v1",
+            ("felizk", "notes", "v1", None, "https://example.com/forge"),
+        ),
+        ("git@git.example.com:felizk/notes.git", ("felizk", "notes", None, None, "https://git.example.com")),
+        ("git.example.com/felizk/notes", ("felizk", "notes", None, None, "https://git.example.com")),
     ],
 )
-def test_parse_repo(raw: str, expected: tuple[str, str, str | None, str | None]) -> None:
+def test_parse_repo(raw: str, expected: tuple[str, str, str | None, str | None, str]) -> None:
     from uam.web.ui.sources import parse_repo
 
     assert parse_repo(raw) == expected

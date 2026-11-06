@@ -40,12 +40,33 @@ the template rules, the publish workflow, `uam-lint`, and a starter kit for peop
 | `UAM_GITHUB_API_URL` | `https://api.github.com` | GitHub API base URL (GitHub Enterprise, or a stub in tests) |
 | `UAM_LOG_LEVEL` | `INFO` | log level (JSON logs on stdout) |
 
+## Sources on Forgejo
+
+A source can live on GitHub or on a Forgejo (or Gitea) server. On *Sources*, paste the repo's web
+URL, such as `https://git.example.com/owner/repo`, a `.../src/branch/<branch>/unraid/app.xml` link, or
+`git@git.example.com:owner/repo.git`. Plain `owner/repo` still means GitHub. Discovery, template
+updates and diffs work the same as on GitHub, except that Forgejo has no ETags or rate limits, so
+template checks always fetch the latest commit.
+
+**Moving from GitHub to Forgejo.** Use *Move* on a source to point it (and every app installed from it)
+at another repo, or *Move GitHub sources to Forgejo* to move all GitHub sources to the same-named repos
+on one server (optionally under another owner). UAM first checks that every template your apps use
+exists at the new location and shows the result. Nothing changes until you confirm, and sources that
+fail the check are skipped. Apps keep their settings and are not reinstalled. With a mirror (same
+commit history) nothing else changes. Otherwise the new repo's template is offered as an ordinary
+template update. The REST API offers the same through `POST /api/sources/{id}/move` (`dry_run: true`
+to only check).
+
 ## Credentials
 
 - **GitHub (private repos and GHCR images).** UAM needs a **classic** personal access token with `repo`
   (to read private templates) and `read:packages` (to pull private GHCR images). At the time of
   writing GHCR doesn't accept fine-grained tokens for pulls. The token is also used for ghcr.io
   when no registry credential matches.
+- **Forgejo / Gitea (private repos).** Add a `forgejo_token` credential: an access token with
+  *read* access to repositories as the secret and the server URL (for example `https://git.example.com`)
+  as the host, so *Test* knows where to check it. Images in a Forgejo package registry need a separate
+  registry credential for that host.
 - **Other registries.** Add a registry credential for that host.
 - **Nginx Proxy Manager.** Add an NPM credential (the e-mail and password of an NPM user), then set
   the NPM URL (for example `http://192.168.1.10:81`), base domain and default certificate in Settings.

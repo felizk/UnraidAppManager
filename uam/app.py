@@ -91,6 +91,7 @@ async def build_runtime(config: AppConfig) -> Runtime:
         return await _build_fake_runtime(config)
 
     from uam.clients.docker_engine import SdkDockerEngine
+    from uam.clients.forgejo import ForgeRouter, HttpForgejoClient
     from uam.clients.github import HttpGitHubClient
     from uam.clients.pushover import PushoverNotifier
     from uam.clients.registry import HttpRegistryClient
@@ -120,7 +121,10 @@ async def build_runtime(config: AppConfig) -> Runtime:
     events = SqlEventLog(sf)
     vault = FernetVault(sf, fernet)
     http = httpx.AsyncClient(timeout=30.0, follow_redirects=True)
-    github = HttpGitHubClient(SqlHttpCache(sf), base_url=config.github_api_url, client=http)
+    github = ForgeRouter(
+        HttpGitHubClient(SqlHttpCache(sf), base_url=config.github_api_url, client=http),
+        HttpForgejoClient(SqlHttpCache(sf), client=http),
+    )
     registry = HttpRegistryClient(httpx.AsyncClient(timeout=30.0, follow_redirects=True))
     docker = SdkDockerEngine(proc_root=config.proc_root)
     proc_net = Path(config.proc_root) / "net"

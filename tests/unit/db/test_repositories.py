@@ -100,6 +100,17 @@ async def test_due_for_check(repos):
     assert [a.name for a in due] == [never.name, past.name, exact.name]
 
 
+async def test_source_forge_url_round_trip_and_move(repos):
+    sources, apps, source = repos
+    forge = await sources.add(make_source(repo="forged", forge_url="https://git.example.com"))
+    assert (await sources.get(forge.id)).forge_url == "https://git.example.com"
+    app = await apps.add(make_app(source_id=source.id))
+    moved = make_source(id=source.id, owner="mirror", repo="notes2", forge_url="https://git.example.com")
+    await sources.update(moved)
+    assert await sources.get(source.id) == moved
+    assert (await apps.get(app.id)).source_id == source.id
+
+
 async def test_sources(repos):
     sources, apps, source = repos
     assert await sources.get(source.id) == source
@@ -150,9 +161,9 @@ async def test_event_log(tmp_db):
 
 async def test_source_update(repos):
     sources, _, source = repos
-    await sources.update(replace(source, owner="ignored", ref="dev", template_path="unraid/x.xml"))
+    await sources.update(replace(source, owner="moved", ref="dev", template_path="unraid/x.xml"))
     stored = await sources.get(source.id)
-    assert (stored.owner, stored.ref, stored.template_path) == ("felizk", "dev", "unraid/x.xml")
+    assert (stored.owner, stored.ref, stored.template_path) == ("moved", "dev", "unraid/x.xml")
     with pytest.raises(ConflictError):
         await sources.update(replace(source, credential_id=999))
     with pytest.raises(NotFound):

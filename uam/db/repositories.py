@@ -161,6 +161,7 @@ class SqlSourceRepository:
             ref=row.ref,
             template_path=row.template_path,
             credential_id=row.credential_id,
+            forge_url=row.forge_url or "",
         )
 
     async def get(self, source_id: int) -> Source:
@@ -180,6 +181,7 @@ class SqlSourceRepository:
                 ref=source.ref,
                 template_path=source.template_path,
                 credential_id=source.credential_id,
+                forge_url=source.forge_url,
             )
             s.add(row)
             try:
@@ -189,11 +191,12 @@ class SqlSourceRepository:
             return self._to_domain(row)
 
     async def update(self, source: Source) -> None:
-        """Replace ref, template path and credential of an existing source."""
+        """Replace every field of an existing source (its apps stay attached)."""
         async with self._sf() as s:
             row = await s.get(SourceRow, source.id)
             if row is None:
                 raise NotFound(f"source {source.id}")
+            row.owner, row.repo, row.forge_url = source.owner, source.repo, source.forge_url
             row.ref, row.template_path, row.credential_id = (
                 source.ref,
                 source.template_path,

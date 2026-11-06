@@ -132,6 +132,11 @@ updates (a new digest for the same tag) are auto-applied by default.
 
   The user adds it once in UAM under Credentials and selects it on the source. GHCR
   pulls fall back to that PAT automatically.
+* Repos on a **Forgejo or Gitea** server work too (same discovery paths and update rules):
+  the user adds a `forgejo_token` credential with read access to repositories. Images in
+  Forgejo's own package registry need a registry credential for that host. When a repo
+  moves from GitHub to Forgejo, mirror it with full history so UAM can move the source
+  without offering a spurious template update.
 * At the time of writing, GHCR does not accept fine-grained PATs for pulls. Check
   GitHub's docs if that has changed.
 * Link the package to the repo (the metadata-action source label does this when the

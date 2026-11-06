@@ -1,5 +1,5 @@
 <tr id="source-{{ s.id }}" class="editing">
-  <td>{{ s.owner }}/{{ s.repo }}</td>
+  <td>{{ s.display_name }}</td>
   <td><input type="text" name="ref" value="{{ s.ref }}" required aria-label="Branch"></td>
   <td><input type="text" name="template_path" value="{{ s.template_path or '' }}" aria-label="Template path"
              placeholder="auto-discover"></td>

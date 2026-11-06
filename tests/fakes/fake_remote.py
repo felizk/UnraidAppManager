@@ -93,7 +93,7 @@ class FakeGitHub:
     async def rate_limit_remaining_fraction(self) -> float:
         return self.rate_fraction
 
-    async def validate_token(self, token: str) -> list[str]:
+    async def validate_token(self, token: str, forge_url: str = "") -> list[str]:
         if token not in self.token_scopes:
             raise AuthError("bad token")
         return self.token_scopes[token]

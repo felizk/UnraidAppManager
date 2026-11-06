@@ -54,6 +54,8 @@ def _parse_time(value: str) -> datetime:
 class HttpGitHubClient:
     """`GitHubClient` implementation backed by httpx and an injected ETag cache."""
 
+    _product = "GitHub"
+
     def __init__(
         self,
         cache: HttpCache,
@@ -80,14 +82,7 @@ class HttpGitHubClient:
         """Find template XML files in the source repo and return those that are Containers."""
         if source.template_path:
             return [await self.get_template(source, source.template_path, token)]
-        resp = await self._request(
-            "GET",
-            f"{self._repo_url(source)}/git/trees/{quote(source.ref, safe='')}",
-            token,
-            params={"recursive": "1"},
-            what=f"{source.owner}/{source.repo}",
-        )
-        tree = resp.json().get("tree", [])
+        tree = await self._list_tree(source, token)
         paths = sorted(e["path"] for e in tree if e.get("type") == "blob" and _is_template_path(e["path"]))
         found: list[DiscoveredTemplate] = []
         for path in paths:
@@ -109,7 +104,7 @@ class HttpGitHubClient:
     ) -> tuple[str, datetime] | None:
         """Return the newest commit for `path`, or None when unchanged since the last call."""
         url = f"{self._repo_url(source)}/commits"
-        params = {"path": path, "sha": source.ref, "per_page": "1"}
+        params = self._commit_params(source, path)
         key = self._cache_key(token, url, params)
         cached = await self._cache.get(key)
         headers = {"If-None-Match": cached[0]} if cached else {}
@@ -134,22 +129,44 @@ class HttpGitHubClient:
             return 1.0
         return max(0.0, min(1.0, self._remaining / self._limit))
 
-    async def validate_token(self, token: str) -> list[str]:
-        """Call `GET /user` and return the token's OAuth scopes."""
+    async def validate_token(self, token: str, forge_url: str = "") -> list[str]:
+        """Call `GET /user` and return the token's OAuth scopes (`forge_url` is unused here)."""
         resp = await self._request("GET", f"{self._base_url}/user", token, what="token")
         raw = resp.headers.get("x-oauth-scopes", "")
         return [s.strip() for s in raw.split(",") if s.strip()]
 
     # ---------- helpers ----------
 
-    def _repo_url(self, source: Source) -> str:
-        return f"{self._base_url}/repos/{quote(source.owner)}/{quote(source.repo)}"
+    def _api_base(self, source: Source) -> str:
+        return self._base_url
 
-    @staticmethod
-    def _cache_key(token: str | None, url: str, params: dict[str, str]) -> str:
+    def _repo_url(self, source: Source) -> str:
+        return f"{self._api_base(source)}/repos/{quote(source.owner)}/{quote(source.repo)}"
+
+    def _commit_params(self, source: Source, path: str) -> dict[str, str]:
+        return {"path": path, "sha": source.ref, "per_page": "1"}
+
+    def _auth_headers(self, token: str) -> dict[str, str]:
+        return {"Authorization": f"Bearer {token}"}
+
+    def _default_headers(self) -> dict[str, str]:
+        return {"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"}
+
+    async def _list_tree(self, source: Source, token: str | None) -> list[dict[str, Any]]:
+        resp = await self._request(
+            "GET",
+            f"{self._repo_url(source)}/git/trees/{quote(source.ref, safe='')}",
+            token,
+            params={"recursive": "1"},
+            what=f"{source.owner}/{source.repo}",
+        )
+        tree: list[dict[str, Any]] = resp.json().get("tree", [])
+        return tree
+
+    def _cache_key(self, token: str | None, url: str, params: dict[str, str]) -> str:
         who = hashlib.sha256(token.encode()).hexdigest()[:16] if token else "anon"
         query = "&".join(f"{k}={v}" for k, v in sorted(params.items()))
-        return f"github:{who}:{url}?{query}"
+        return f"{self._product.lower()}:{who}:{url}?{query}"
 
     async def _fetch_blob(self, source: Source, path: str, token: str | None) -> tuple[str, str]:
         resp = await self._request(
@@ -170,7 +187,7 @@ class HttpGitHubClient:
             "GET",
             f"{self._repo_url(source)}/commits",
             token,
-            params={"path": path, "sha": source.ref, "per_page": "1"},
+            params=self._commit_params(source, path),
             what=f"{source.owner}/{source.repo}:{path}",
         )
         return self._commit_from_list(resp.json(), path)
@@ -208,12 +225,9 @@ class HttpGitHubClient:
         headers: dict[str, str] | None = None,
         what: str = "",
     ) -> httpx.Response:
-        all_headers = {
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-        }
+        all_headers = self._default_headers()
         if token:
-            all_headers["Authorization"] = f"Bearer {token}"
+            all_headers.update(self._auth_headers(token))
         all_headers.update(headers or {})
 
         attempt = 0
@@ -236,12 +250,12 @@ class HttpGitHubClient:
             return resp
         if status in (403, 429) and resp.headers.get("x-ratelimit-remaining") == "0":
             reset = self._reset or datetime.now(UTC)
-            raise RateLimited(reset, "GitHub rate limit exceeded")
+            raise RateLimited(reset, f"{self._product} rate limit exceeded")
         if status == 401:
-            raise AuthError("GitHub rejected the token (401)")
+            raise AuthError(f"{self._product} rejected the token (401)")
         if status == 404:
             hint = " (a private repository looks like a 404 when no token is supplied)" if anonymous else ""
-            raise NotFound(f"GitHub 404 for {what}{hint}")
+            raise NotFound(f"{self._product} 404 for {what}{hint}")
         body = resp.text
         try:
             body = str(json.loads(body).get("message", body))

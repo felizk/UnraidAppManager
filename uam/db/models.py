@@ -44,6 +44,7 @@ class SourceRow(Base):
     credential_id: Mapped[int | None] = mapped_column(
         ForeignKey("credentials.id", ondelete="SET NULL"), nullable=True
     )
+    forge_url: Mapped[str] = mapped_column(String(255), default="", server_default="")
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
 
 

@@ -28,7 +28,7 @@ from uam.contracts import (
     TemplateCodec,
     Vault,
 )
-from uam.domain import App, PortAllocation, ProxySettings, UpdateCheckResult
+from uam.domain import App, Credential, PortAllocation, ProxySettings, UpdateCheckResult, normalize_forge_url
 from uam.services.template_export import ExportPlan as ExportPlan
 
 if TYPE_CHECKING:
@@ -140,6 +140,21 @@ def pat_check(token: str, username: str, scopes: list[str]) -> tuple[bool, str]:
     if problems:
         return False, "token accepted by GitHub" + shown + ", but " + "; ".join(problems)
     return True, "token accepted by GitHub" + (shown if scopes or token.startswith("ghp_") else "")
+
+
+async def forgejo_token_check(services: ApiServices, cred: Credential) -> tuple[bool, str]:
+    """Check a Forgejo token against its server: the credential's host, else a source that uses it."""
+    forge_url = normalize_forge_url(cred.registry_host)
+    if not forge_url:
+        users = [s for s in await services.sources.list() if s.credential_id == cred.id and s.forge_url]
+        forge_url = users[0].forge_url if users else ""
+    if not forge_url:
+        return (
+            False,
+            "set the credential's host to your Forgejo URL (or use it on a Forgejo source) to test it",
+        )
+    await services.github.validate_token(await services.vault.reveal(cred.id), forge_url=forge_url)
+    return True, f"token accepted by {forge_url}"
 
 
 async def app_logs(services: ApiServices, app: App, tail: int) -> str | None:

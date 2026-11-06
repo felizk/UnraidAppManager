@@ -81,10 +81,7 @@ class InMemorySourceRepository:
     async def update(self, source: Source) -> None:
         if source.id not in self.sources:
             raise NotFound(f"source {source.id}")
-        old = self.sources[source.id]
-        self.sources[source.id] = replace(
-            old, ref=source.ref, template_path=source.template_path, credential_id=source.credential_id
-        )
+        self.sources[source.id] = source
 
     async def delete(self, source_id: int) -> None:
         if self._apps and any(a.source_id == source_id for a in self._apps.apps.values()):

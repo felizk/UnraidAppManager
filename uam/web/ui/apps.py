@@ -135,8 +135,7 @@ async def app_detail(app_id: int, request: Request, services: Services) -> Respo
     compare = ""
     if v.update_template and v.app.installed_template_commit:
         compare = (
-            f"https://github.com/{source.owner}/{source.repo}/compare/"
-            f"{v.app.installed_template_commit}...{v.app.available_template_commit}"
+            f"{source.web_url}/compare/{v.app.installed_template_commit}...{v.app.available_template_commit}"
         )
     return render(
         request,

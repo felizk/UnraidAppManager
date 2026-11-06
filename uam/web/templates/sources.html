@@ -7,7 +7,7 @@
   <h2>Add a source</h2>
   <form hx-post="/sources">
     <label>Repository
-      <input type="text" name="repo" placeholder="owner/repo or https://github.com/owner/repo" required>
+      <input type="text" name="repo" placeholder="owner/repo, https://github.com/owner/repo or https://git.example.com/owner/repo" required>
     </label>
     <div class="grid">
       <label>Branch
@@ -37,6 +37,32 @@
   {% endfor %}
   </tbody>
 </table>
+{% if sources|rejectattr('forge_url')|list %}
+<article>
+  <h2>Move GitHub sources to Forgejo</h2>
+  <p>For when you mirror or migrate your GitHub repos to a Forgejo server. Every GitHub source is pointed
+  at the repo with the same name on that server; apps keep their settings and are not reinstalled.
+  Nothing changes until you confirm the checks.</p>
+  <form hx-post="/sources/move-all/check" hx-target="#move-all-result" hx-swap="innerHTML">
+    <div class="grid">
+      <label>Forgejo URL
+        <input type="text" name="forge_url" placeholder="https://git.example.com" required>
+      </label>
+      <label>Owner on Forgejo (optional)
+        <input type="text" name="owner" placeholder="same as on GitHub">
+      </label>
+      <label>Credential
+        <select name="credential_id">
+          <option value="">(public repositories)</option>
+          {% for c in credentials %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+        </select>
+      </label>
+    </div>
+    <button type="submit" class="sm" hx-disabled-elt="this">Check</button>
+  </form>
+  <div id="move-all-result"></div>
+</article>
+{% endif %}
 {% else %}
 <p>No sources yet.</p>
 {% endif %}

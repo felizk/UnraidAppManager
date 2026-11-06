@@ -17,9 +17,11 @@ from uam.domain import (
     ImportPlan,
     ProxySettings,
     Source,
+    normalize_forge_url,
 )
 from uam.errors import AuthError, ConflictError, UamError, ValidationError
 from uam.logging import redact
+from uam.services.source_move import SourceMover
 from uam.web.api.errors import UamRoute
 from uam.web.api.schemas import (
     AcceptedOut,
@@ -48,6 +50,9 @@ from uam.web.api.schemas import (
     PortsOut,
     SettingsModel,
     SourceIn,
+    SourceMoveCheckOut,
+    SourceMoveIn,
+    SourceMoveOut,
     SourceOut,
     SourceUpdateIn,
     TemplatePreviewOut,
@@ -59,6 +64,7 @@ from uam.web.deps import (
     OrchestratorService,
     TemplateExporterService,
     UpdateCheckerService,
+    forgejo_token_check,
     get_auth,
     get_checker,
     get_exporter,
@@ -222,6 +228,9 @@ async def test_credential(
             scopes = await services.github.validate_token(token)
             ok, detail = pat_check(token, cred.username, scopes)
             return CredentialTestOut(ok=ok, scopes=scopes, detail=detail)
+        if cred.kind == CredentialKind.FORGEJO_TOKEN:
+            ok, detail = await forgejo_token_check(services, cred)
+            return CredentialTestOut(ok=ok, detail=detail)
         if cred.kind == CredentialKind.NPM:
             if services.proxy is None:
                 return CredentialTestOut(ok=False, detail="Nginx Proxy Manager is not configured")
@@ -246,11 +255,19 @@ async def list_sources(services: Annotated[ApiServices, Depends(get_services)]) 
 
 @protected.post("/sources", response_model=SourceOut, status_code=201)
 async def create_source(body: SourceIn, services: Annotated[ApiServices, Depends(get_services)]) -> SourceOut:
-    """Add a GitHub repo as a template source."""
+    """Add a GitHub (or, with `forge_url`, Forgejo/Gitea) repo as a template source."""
     if body.credential_id is not None:
         await services.vault.get(body.credential_id)
     source = await services.sources.add(
-        Source(0, body.owner, body.repo, body.ref, body.template_path, body.credential_id)
+        Source(
+            0,
+            body.owner,
+            body.repo,
+            body.ref,
+            body.template_path,
+            body.credential_id,
+            normalize_forge_url(body.forge_url),
+        )
     )
     return SourceOut.from_domain(source)
 
@@ -272,6 +289,42 @@ async def update_source(
     )
     await services.sources.update(source)
     return SourceOut.from_domain(await services.sources.get(source_id))
+
+
+@protected.post("/sources/{source_id}/move", response_model=SourceMoveOut)
+async def move_source(
+    source_id: int, body: SourceMoveIn, services: Annotated[ApiServices, Depends(get_services)]
+) -> SourceMoveOut:
+    """Point a source and its apps at another repo, e.g. a Forgejo mirror (409 if a template is missing)."""
+    source = await services.sources.get(source_id)
+    sent = body.model_fields_set
+    target = replace(
+        source,
+        forge_url=normalize_forge_url(body.forge_url),
+        owner=body.owner or source.owner,
+        repo=body.repo or source.repo,
+        ref=body.ref or source.ref,
+        template_path=(body.template_path or None) if "template_path" in sent else source.template_path,
+        credential_id=body.credential_id,
+    )
+    mover = SourceMover(services.sources, services.apps, services.github, services.vault)
+    plan = await (mover.plan(source_id, target) if body.dry_run else mover.move(source_id, target))
+    return SourceMoveOut(
+        ok=plan.ok,
+        moved=not body.dry_run,
+        source=SourceOut.from_domain(plan.source),
+        target=SourceOut.from_domain(plan.target),
+        checks=[
+            SourceMoveCheckOut(
+                template_path=c.template_path,
+                app_names=list(c.app_names),
+                ok=c.ok,
+                warning=c.warning,
+                detail=c.detail,
+            )
+            for c in plan.checks
+        ],
+    )
 
 
 @protected.delete("/sources/{source_id}", status_code=204)

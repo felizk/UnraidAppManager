@@ -1,0 +1,29 @@
+{# plans: list[MovePlan]; action: URL to apply; fields: hidden inputs to resend #}
+{% if error %}<p class="field-error" role="alert">{{ error }}</p>{% endif %}
+{% if plans %}
+<table class="move-preview">
+  <thead><tr><th>Source</th><th>Moves to</th><th>Template</th><th>Apps</th><th>Check</th></tr></thead>
+  <tbody>
+  {% for p in plans %}
+    {% for c in p.checks %}
+    <tr>
+      {% if loop.first %}<td rowspan="{{ p.checks|length }}">{{ p.source.display_name }}</td>
+      <td rowspan="{{ p.checks|length }}">{{ p.target.display_name }} <small>({{ p.target.ref }})</small></td>{% endif %}
+      <td><code>{{ c.template_path }}</code></td>
+      <td>{{ c.app_names|join(', ') or '-' }}</td>
+      <td class="{{ 'field-error' if not c.ok else ('warn' if c.warning else '') }}">{{ '✗' if not c.ok else ('!' if c.warning else '✓') }} {{ c.detail }}</td>
+    </tr>
+    {% endfor %}
+  {% endfor %}
+  </tbody>
+</table>
+{% set movable = plans|selectattr('ok')|list %}
+{% if movable %}
+<form hx-post="{{ action }}">
+  {% for k, v in fields.items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+  <button type="submit" class="sm" hx-disabled-elt="this"
+          hx-confirm="Move {{ movable|length }} source(s)?">Move {{ movable|length }} source(s)</button>
+  {% if movable|length < plans|length %}<small>Sources with a failed check are skipped.</small>{% endif %}
+</form>
+{% else %}<p class="field-error">Nothing can be moved: fix the failed checks first.</p>{% endif %}
+{% endif %}

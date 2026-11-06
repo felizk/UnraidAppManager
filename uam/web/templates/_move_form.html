@@ -1,0 +1,19 @@
+<form class="move-form" hx-post="/sources/{{ source.id }}/move/check" hx-target="#templates-{{ source.id }}" hx-swap="innerHTML">
+  <p>Point <strong>{{ source.display_name }}</strong> and its apps at another repository, for example its
+  Forgejo mirror. Apps keep their settings; nothing is reinstalled.</p>
+  <div class="grid">
+    <label>New repository
+      <input type="text" name="repo" placeholder="https://git.example.com/{{ source.owner }}/{{ source.repo }}" required>
+    </label>
+    <label>Branch
+      <input type="text" name="ref" placeholder="{{ source.ref }}">
+    </label>
+    <label>Credential
+      <select name="credential_id">
+        <option value="">(public repository)</option>
+        {% for c in credentials %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+      </select>
+    </label>
+  </div>
+  <button type="submit" class="sm" hx-disabled-elt="this">Check</button>
+</form>

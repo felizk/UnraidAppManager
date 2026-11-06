@@ -13,7 +13,7 @@ from uam.errors import ConflictError, UamError, ValidationError
 from uam.logging import redact
 from uam.settings import Settings
 from uam.web.api.schemas import SettingsModel
-from uam.web.deps import ApiServices, ExportPlan, pat_check
+from uam.web.deps import ApiServices, ExportPlan, forgejo_token_check, pat_check
 from uam.web.ui.support import (
     Services,
     UiRoute,
@@ -127,6 +127,8 @@ async def test_credential(credential_id: int, request: Request, services: Servic
         if cred.kind == CredentialKind.GITHUB_PAT:
             token = await services.vault.reveal(credential_id)
             ok, detail = pat_check(token, cred.username, await services.github.validate_token(token))
+        elif cred.kind == CredentialKind.FORGEJO_TOKEN:
+            ok, detail = await forgejo_token_check(services, cred)
         elif cred.kind == CredentialKind.NPM:
             if services.proxy is None:
                 ok, detail = False, "Nginx Proxy Manager is not configured"

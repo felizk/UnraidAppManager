@@ -125,11 +125,14 @@ class CredentialTestOut(BaseModel):
 
 # ---------------------------------------------------------------- sources / templates
 class SourceIn(BaseModel):
+    """`forge_url` (e.g. `https://git.example.com`) makes this a Forgejo/Gitea source; empty is GitHub."""
+
     owner: str = Field(min_length=1)
     repo: str = Field(min_length=1)
     ref: str = "main"
     template_path: str | None = None
     credential_id: int | None = None
+    forge_url: str = ""
 
 
 class SourceUpdateIn(BaseModel):
@@ -147,6 +150,7 @@ class SourceOut(BaseModel):
     ref: str
     template_path: str | None
     credential_id: int | None
+    forge_url: str = ""
 
     @classmethod
     def from_domain(cls, s: Source) -> SourceOut:
@@ -158,7 +162,38 @@ class SourceOut(BaseModel):
             ref=s.ref,
             template_path=s.template_path,
             credential_id=s.credential_id,
+            forge_url=s.forge_url,
         )
+
+
+class SourceMoveIn(BaseModel):
+    """Where to move a source. Unset owner/repo/ref/template_path keep the source's current values."""
+
+    forge_url: str = ""
+    owner: str | None = Field(default=None, min_length=1)
+    repo: str | None = Field(default=None, min_length=1)
+    ref: str | None = Field(default=None, min_length=1)
+    template_path: str | None = None
+    credential_id: int | None = None
+    dry_run: bool = False
+
+
+class SourceMoveCheckOut(BaseModel):
+    template_path: str
+    app_names: list[str]
+    ok: bool
+    warning: bool
+    detail: str
+
+
+class SourceMoveOut(BaseModel):
+    """`moved` is False for a dry run; `source` is the source as it is (dry run) or now is."""
+
+    ok: bool
+    moved: bool
+    source: SourceOut
+    target: SourceOut
+    checks: list[SourceMoveCheckOut]
 
 
 class DiscoveredTemplateOut(BaseModel):

@@ -35,6 +35,8 @@ from uam.settings import Settings
 
 @runtime_checkable
 class GitHubClient(Protocol):
+    """Reads templates from a source repo: GitHub, or Forgejo/Gitea when `Source.forge_url` is set."""
+
     async def discover_templates(self, source: Source, token: str | None) -> list[DiscoveredTemplate]: ...
 
     async def get_template(self, source: Source, path: str, token: str | None) -> DiscoveredTemplate: ...
@@ -47,8 +49,11 @@ class GitHubClient(Protocol):
 
     async def rate_limit_remaining_fraction(self) -> float: ...
 
-    async def validate_token(self, token: str) -> list[str]:
-        """Return the token's scopes (empty for fine-grained tokens)."""
+    async def validate_token(self, token: str, forge_url: str = "") -> list[str]:
+        """Return the token's scopes (empty for fine-grained and Forgejo tokens).
+
+        `forge_url` checks the token against that Forgejo/Gitea server instead of GitHub.
+        """
         ...
 
 
@@ -231,7 +236,7 @@ class SourceRepository(Protocol):
     async def add(self, source: Source) -> Source: ...
 
     async def update(self, source: Source) -> None:
-        """Replace ref, template path and credential of an existing source (owner/repo stay)."""
+        """Replace every field of an existing source; its apps stay attached (see source moves)."""
         ...
 
     async def delete(self, source_id: int) -> None: ...

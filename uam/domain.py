@@ -7,6 +7,8 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Literal
 
+from uam.errors import ValidationError
+
 Protocol_ = Literal["tcp", "udp"]
 
 # ---------- Unraid template ----------
@@ -55,6 +57,7 @@ class UnraidTemplate:
 # ---------- Sources / credentials ----------
 class CredentialKind(StrEnum):
     GITHUB_PAT = "github_pat"
+    FORGEJO_TOKEN = "forgejo_token"  # noqa: S105 - a kind name, not a secret
     REGISTRY = "registry"
     NPM = "npm"
     PUSHOVER = "pushover"
@@ -71,9 +74,30 @@ class Credential:
     registry_host: str = ""
 
 
+def normalize_forge_url(raw: str) -> str:
+    """Return a Forgejo web root as `scheme://host[/prefix]` with no trailing slash ("" stays "").
+
+    A bare host gets `https://`; a pasted API root (`.../api/v1`) is trimmed.
+    """
+    url = raw.strip()
+    if not url:
+        return ""
+    if "://" not in url:
+        url = f"https://{url}"
+    scheme, rest = url.split("://", 1)
+    rest = rest.rstrip("/")
+    if scheme not in ("http", "https") or not rest or rest.startswith("/") or " " in rest:
+        raise ValidationError(f"not a Forgejo URL: {raw!r}")
+    return f"{scheme}://{rest.removesuffix('/api/v1')}"
+
+
 @dataclass(frozen=True, slots=True)
 class Source:
-    """A GitHub repository that provides one or more app templates."""
+    """A Git repository (GitHub, or a Forgejo/Gitea instance) that provides app templates.
+
+    `forge_url` is the web root of a Forgejo/Gitea server such as `https://git.example.com`;
+    empty means github.com.
+    """
 
     id: int
     owner: str
@@ -81,6 +105,20 @@ class Source:
     ref: str = "main"
     template_path: str | None = None
     credential_id: int | None = None
+    forge_url: str = ""
+
+    @property
+    def web_url(self) -> str:
+        """The repository's page in a browser."""
+        return f"{self.forge_url or 'https://github.com'}/{self.owner}/{self.repo}"
+
+    @property
+    def display_name(self) -> str:
+        """`owner/repo`, prefixed with the forge host for non-GitHub sources."""
+        if not self.forge_url:
+            return f"{self.owner}/{self.repo}"
+        host = self.forge_url.split("://", 1)[-1]
+        return f"{host}/{self.owner}/{self.repo}"
 
 
 @dataclass(frozen=True, slots=True)
